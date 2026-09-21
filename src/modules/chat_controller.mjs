@@ -9,6 +9,32 @@ import { LiveChatItemFactory, EmojiModeEnum, renderChatItem, updateMutedWordsLis
 import { LiveChatLayoutCache, layoutChatItem } from './chat_layout.mjs';
 import { MemeInjector } from './meme_injector.mjs';
 
+/** @type {?HTMLCanvasElement} lazily created canvas used to measure meme popup text width */
+let memeTextMeasureCanvas = null;
+
+const MEME_POPUP_FONT_WEIGHT = 900;
+const MEME_POPUP_REFERENCE_SIZE = 100;
+const MEME_POPUP_LINE_HEIGHT = 1.1;
+/** How long (ms) the meme popup stays visible, independent of the audio's own duration. */
+const MEME_POPUP_DISPLAY_MS = 2500;
+
+/**
+ * Computes a font size (in px) so that `text` fills close to `maxWidth`, capped by `maxHeight`.
+ * @param {string} text
+ * @param {number} maxWidth
+ * @param {number} maxHeight
+ * @returns {number} font size in pixels
+ */
+function fitMemePopupFontSize(text, maxWidth, maxHeight) {
+	memeTextMeasureCanvas ??= document.createElement('canvas');
+	const ctx = memeTextMeasureCanvas.getContext('2d');
+	ctx.font = `${MEME_POPUP_FONT_WEIGHT} ${MEME_POPUP_REFERENCE_SIZE}px sans-serif`;
+	const measuredWidth = ctx.measureText(text).width || MEME_POPUP_REFERENCE_SIZE;
+	const byWidth = MEME_POPUP_REFERENCE_SIZE * (maxWidth / measuredWidth);
+	const byHeight = maxHeight / MEME_POPUP_LINE_HEIGHT;
+	return Math.max(16, Math.min(byWidth, byHeight));
+}
+
 export const SimultaneousModeEnum = Object.freeze({
 	ALL: 0,
 	FIRST: 1,
@@ -22,6 +48,10 @@ export class LiveChatController {
 	#skip = false;
 	/** @type {MutationObserver} */
 	#layerSizeObserver;
+	/** @type {?HTMLAudioElement} currently playing meme audio, so a new click can cancel it */
+	#activeMemeAudio = null;
+	/** @type {number} timer id that hides the meme popup */
+	#memePopupHideTimer = 0;
 
 	/** @type {"desktop" | "mobile"} */ device;
 	/** @type {HTMLElement} */ player;
@@ -80,8 +110,7 @@ export class LiveChatController {
 					memeEl.dataset.scored = 'true';
 					this.addScore(100);
 				}
-				const videoElement = this.player.querySelector('video');
-				MemeInjector.playAudio(memeEl, videoElement);
+				this.#showMemePopup(memeEl);
 				return;
 			}
 			const interactiveTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
@@ -93,6 +122,8 @@ export class LiveChatController {
 		}, { passive: true });
 		root.addEventListener('animationend', e => {
 			const elem = /** @type {HTMLElement} */ (e.target);
+			// Skip persistent overlay elements; only recycle finished flush-scroll chat messages.
+			if (elem.id === 'yt-lcf-score' || elem.id === 'yt-lcf-meme-popup') return;
 			if (elem.parentNode === root) {
 				this.layoutCache.delete(elem.id);
 				elem.remove();
@@ -161,6 +192,37 @@ export class LiveChatController {
 		// Initialize and start meme injector
 		this.memeInjector = new MemeInjector(this.layer, this.layoutCache);
 		this.memeInjector.start();
+	}
+
+	/**
+	 * Shows the clicked meme's text at the center of the video and plays its audio.
+	 * Only the most recent click is shown; any previous popup/audio is cancelled immediately.
+	 * @param {HTMLElement} memeEl the meme element that was clicked
+	 */
+	#showMemePopup(memeEl) {
+		this.#activeMemeAudio?.pause();
+		this.#activeMemeAudio = null;
+		clearTimeout(this.#memePopupHideTimer);
+
+		const popup = this.layer.memePopupElement;
+		const text = memeEl.dataset.text || '';
+		const rect = this.layer.element.getBoundingClientRect();
+		popup.textContent = text;
+		popup.style.fontSize = `${fitMemePopupFontSize(text, rect.width * 0.92, rect.height * 0.4)}px`;
+		popup.classList.remove('show');
+		void popup.offsetWidth; // restart the pop-in animation
+		popup.classList.add('show');
+
+		this.#memePopupHideTimer = setTimeout(() => {
+			popup.classList.remove('show');
+		}, MEME_POPUP_DISPLAY_MS);
+
+		try {
+			const videoElement = this.player.querySelector('video');
+			this.#activeMemeAudio = MemeInjector.playAudio(memeEl, videoElement);
+		} catch (err) {
+			logger.error('Failed to play meme audio.\nCaused by:', err);
+		}
 	}
 
 	/**

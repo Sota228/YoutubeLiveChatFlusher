@@ -64,7 +64,9 @@ export class LiveChatLayer {
 		});
 		this.scoreElement = document.createElement('div');
 		this.scoreElement.id = 'yt-lcf-score';
-		this.root.append(link, ...styles, this.scoreElement);
+		this.memePopupElement = document.createElement('div');
+		this.memePopupElement.id = 'yt-lcf-meme-popup';
+		this.root.append(link, ...styles, this.scoreElement, this.memePopupElement);
 		this.#initialElemCount = this.root.childElementCount;
 
 		const mutationObserver = new MutationObserver(() => {
@@ -87,7 +89,7 @@ export class LiveChatLayer {
 	 * @returns {LiveChatLayer} layer
 	 */
 	clear() {
-		const preserved = this.root.querySelectorAll('link,style,#yt-lcf-score');
+		const preserved = this.root.querySelectorAll('link,style,#yt-lcf-score,#yt-lcf-meme-popup');
 		this.root.replaceChildren(...preserved);
 		return this;
 	}
