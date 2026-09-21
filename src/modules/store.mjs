@@ -40,6 +40,8 @@ export const DEFAULT_CONFIG = Object.freeze({
 		mode_replay: 1,
 		autostart: 0,
 		message_pause: 1,
+		score_enabled: 1,
+		score_position: 'top-right',
 	},
 	parts: {
 		normal: { photo: false, name: false, message: true, color: '', strokeColor: '' },

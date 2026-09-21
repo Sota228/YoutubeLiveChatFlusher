@@ -96,6 +96,7 @@ const {
 	mode_livestream, mode_replay,
 	autostart,
 	message_pause,
+	score_enabled,
 	person_detector_device,
 	translation_method,
 	translation_bodyType,
@@ -115,6 +116,7 @@ const {
 /** @type {Record<string, HTMLSelectElement>} */
 // @ts-expect-error
 const {
+	score_position,
 	person_detector_backend,
 	translation_translator
 } = form.elements;
@@ -153,6 +155,10 @@ s.load().then(() => {
 
 	// message pause
 	message_pause.value = s.others.message_pause.toString();
+
+	// score display
+	score_enabled.value = (s.others.score_enabled ?? 1).toString();
+	score_position.value = s.others.score_position ?? 'top-right';
 
 	// person detection
 	person_detector_device.value = s.personDetection.device;
@@ -317,6 +323,8 @@ form.addEventListener('submit', async e => {
 			mode_replay: /** @type {FetchingModeEnum} */ (Number.parseInt(mode_replay.value, 10)),
 			autostart: Number.parseInt(autostart.value, 10),
 			message_pause: Number.parseInt(message_pause.value, 10),
+			score_enabled: Number.parseInt(score_enabled.value, 10),
+			score_position: score_position.value,
 		},
 		/** @type {Partial<typeof s.data.hotkeys>} */
 		hotkeys: {

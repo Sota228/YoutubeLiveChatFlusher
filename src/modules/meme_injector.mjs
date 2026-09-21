@@ -133,7 +133,7 @@ export class MemeInjector {
 
 		const audio = new Audio(audioUrl);
 		audio.volume = 1.0; // Play meme loudly
-		
+
 		let originalVolume = 1.0;
 		if (videoElement) {
 			originalVolume = videoElement.volume;
