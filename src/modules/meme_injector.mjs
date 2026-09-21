@@ -30,9 +30,9 @@ function createMemeElement(meme) {
 
 	el.append(header, body);
 
-	// Apply custom color if set
+	// Save custom color to dataset for when played
 	if (meme.color) {
-		el.style.color = meme.color;
+		el.dataset.color = meme.color;
 	}
 
 	return el;

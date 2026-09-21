@@ -69,11 +69,13 @@ export class LiveChatController {
 		root.addEventListener('click', e => {
 			const origin = /** @type {?HTMLElement} */ (e.target);
 			// Check if the click is on a meme comment or its child
-			const memeEl = origin?.closest?.('.meme') || (origin?.parentElement?.closest?.('.meme'));
+			const memeEl = /** @type {?HTMLElement} */ (origin?.closest?.('.meme') || (origin?.parentElement?.closest?.('.meme')));
 			if (memeEl) {
 				e.stopPropagation();
+				memeEl.classList.add('played');
+				memeEl.style.color = memeEl.dataset.color || '#ff6ec7';
 				const videoElement = this.player.querySelector('video');
-				MemeInjector.playAudio(/** @type {HTMLElement} */ (memeEl), videoElement);
+				MemeInjector.playAudio(memeEl, videoElement);
 				return;
 			}
 			const interactiveTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
