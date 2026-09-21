@@ -62,7 +62,9 @@ export class LiveChatLayer {
 			element.id = id;
 			return element;
 		});
-		this.root.append(link, ...styles);
+		this.scoreElement = document.createElement('div');
+		this.scoreElement.id = 'yt-lcf-score';
+		this.root.append(link, ...styles, this.scoreElement);
 		this.#initialElemCount = this.root.childElementCount;
 
 		const mutationObserver = new MutationObserver(() => {
@@ -85,8 +87,8 @@ export class LiveChatLayer {
 	 * @returns {LiveChatLayer} layer
 	 */
 	clear() {
-		const styles = this.root.querySelectorAll('link,style');
-		this.root.replaceChildren(...styles);
+		const preserved = this.root.querySelectorAll('link,style,#yt-lcf-score');
+		this.root.replaceChildren(...preserved);
 		return this;
 	}
 
