@@ -38,10 +38,10 @@
 		"page": "options/options.html",
 		"open_in_tab": true
 	},
-	"permissions": ["storage"],
+	"permissions": ["storage", "unlimitedStorage"],
 	"web_accessible_resources": [
 		{
-			"resources": ["modules/*", "injections/*", "styles/*", "templates/*", "images/*"],
+			"resources": ["assets/*", "modules/*", "injections/*", "styles/*", "templates/*", "images/*"],
 			"matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"]
 		}
 	]

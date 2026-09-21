@@ -1,0 +1,242 @@
+[
+	{
+		"id": "preset_01",
+		"text": "It's 判断力足らんかった",
+		"audioFile": "assets/audio/It`s 判断力足らんかった.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_02",
+		"text": "あきらめんなよ",
+		"audioFile": "assets/audio/あきらめんなよ.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_03",
+		"text": "え嘘だろ嘘だろ",
+		"audioFile": "assets/audio/え嘘だろ嘘だろ.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_04",
+		"text": "お前の席ねぇから",
+		"audioFile": "assets/audio/お前の席ないから.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_05",
+		"text": "厳しいって",
+		"audioFile": "assets/audio/きびしって.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_06",
+		"text": "ぎこぎこはしません",
+		"audioFile": "assets/audio/ぎこぎこ.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_07",
+		"text": "けつの穴がない",
+		"audioFile": "assets/audio/けつの穴がない.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_08",
+		"text": "このはげー違うだろ",
+		"audioFile": "assets/audio/このはげ.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_09",
+		"text": "これはひどい",
+		"audioFile": "assets/audio/これはひどい.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_10",
+		"text": "しこランド",
+		"audioFile": "assets/audio/しこランド.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_11",
+		"text": "そんな装備で大丈夫か",
+		"audioFile": "assets/audio/そんな装備で大丈夫か.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_12",
+		"text": "でんじろう先生",
+		"audioFile": "assets/audio/でんじろう先生.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_13",
+		"text": "ドブカスが",
+		"audioFile": "assets/audio/どぶかすが.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_14",
+		"text": "離せっ！",
+		"audioFile": "assets/audio/はなせ.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_15",
+		"text": "ほんとかな？",
+		"audioFile": "assets/audio/ほんとかな.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_16",
+		"text": "まずいですよ",
+		"audioFile": "assets/audio/まずいですよ.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_17",
+		"text": "やろうぶっ殺してやる",
+		"audioFile": "assets/audio/やろうぶっ殺してやる.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_18",
+		"text": "アタタメテクダサイトイッテオマエ",
+		"audioFile": "assets/audio/ガニエフ.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_19",
+		"text": "ランランルー",
+		"audioFile": "assets/audio/ランランル.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_20",
+		"text": "何をする",
+		"audioFile": "assets/audio/何をする.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_21",
+		"text": "何を四天王？何を四天王！？ (1)",
+		"audioFile": "assets/audio/何を四天王？何を四天王！？ (1).mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_22",
+		"text": "出ないんですね",
+		"audioFile": "assets/audio/出ないんですね.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_23",
+		"text": "君のような勘のいいガキは嫌いだよ",
+		"audioFile": "assets/audio/君のような勘のいいガキは嫌いだよ（鋼の錬金術師）.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_24",
+		"text": "大概にせぇよ",
+		"audioFile": "assets/audio/大概にせいよ.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_25",
+		"text": "幸せならOKです",
+		"audioFile": "assets/audio/幸せならOKです.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_26",
+		"text": "引っ越し引っ越し",
+		"audioFile": "assets/audio/騒音おばさん.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_27",
+		"text": "折れてはないと思うけど痛い",
+		"audioFile": "assets/audio/折れてはないと思うけど痛い.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_28",
+		"text": "殺すぞー",
+		"audioFile": "assets/audio/殺すぞー.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_29",
+		"text": "水素の音",
+		"audioFile": "assets/audio/水素の音.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_30",
+		"text": "21歳",
+		"audioFile": "assets/audio/男性「21歳」.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_31",
+		"text": "もちろん俺らは抵抗するで？",
+		"audioFile": "assets/audio/男性「もちろん俺らは抵抗するで？」.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_32",
+		"text": "畜生めー!",
+		"audioFile": "assets/audio/畜生めー!.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_33",
+		"text": "粉ばなな",
+		"audioFile": "assets/audio/粉ばなな.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_34",
+		"text": "許せんなぁ...許せんなぁ...！ (1)",
+		"audioFile": "assets/audio/許せんなぁ...許せんなぁ...！ (1).mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_35",
+		"text": "命がけで",
+		"audioFile": "assets/audio/野々村.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_36",
+		"text": "ここ",
+		"audioFile": "assets/audio/野獣「こ↑こ↓」.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_37",
+		"text": "ま、多少はね？",
+		"audioFile": "assets/audio/野獣「ま、多少はね？」.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_38",
+		"text": "やりますねえ",
+		"audioFile": "assets/audio/野獣「やりますねえ」 (1).mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_39",
+		"text": "開示だな",
+		"audioFile": "assets/audio/開示だな.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_40",
+		"text": "震えてねむれや",
+		"audioFile": "assets/audio/震えてねむれや.mp3",
+		"enabled": true
+	}
+]

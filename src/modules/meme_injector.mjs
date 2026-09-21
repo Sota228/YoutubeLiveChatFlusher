@@ -17,7 +17,7 @@ function createMemeElement(meme) {
 	el.classList.add('text', 'meme');
 	el.id = `meme_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 	el.dataset.memeId = meme.id;
-	el.dataset.audioUrl = meme.audioDataUrl;
+	el.dataset.audioUrl = meme.audioDataUrl || meme.audioUrl || '';
 	el.dataset.text = meme.text;
 
 	// Build the inner structure similar to 'text' template

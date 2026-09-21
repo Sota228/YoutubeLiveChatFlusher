@@ -18,12 +18,27 @@ self.browser ??= chrome;
 const STORAGE_KEY = 'memes';
 
 /**
- * Loads all memes from storage.
- * @returns {Promise<MemeEntry[]>} array of meme entries
+ * Loads default meme presets from assets/default_memes.json
+ * @returns {Promise<MemeEntry[]>}
  */
-export async function loadMemes() {
-	const data = await browser.storage.local.get(STORAGE_KEY);
-	return data[STORAGE_KEY] || [];
+export async function loadDefaultMemes() {
+	try {
+		const url = browser.runtime.getURL('assets/default_memes.json');
+		const res = await fetch(url);
+		if (!res.ok) return [];
+		const raw = await res.json();
+		return raw.map(item => ({
+			id: item.id || `preset_${item.text}`,
+			text: item.text,
+			audioDataUrl: item.audioFile ? browser.runtime.getURL(item.audioFile) : (item.audioDataUrl || ''),
+			color: item.color || '',
+			enabled: item.enabled ?? true,
+			isPreset: true,
+		}));
+	} catch (e) {
+		console.warn('Failed to load default memes:', e);
+		return [];
+	}
 }
 
 /**
@@ -32,6 +47,37 @@ export async function loadMemes() {
  */
 export async function saveMemes(memes) {
 	await browser.storage.local.set({ [STORAGE_KEY]: memes });
+}
+
+/**
+ * Loads all memes from storage merged with default presets.
+ * @returns {Promise<MemeEntry[]>} array of meme entries
+ */
+export async function loadMemes() {
+	const data = await browser.storage.local.get(STORAGE_KEY);
+	const userMemes = data[STORAGE_KEY];
+	const defaults = await loadDefaultMemes();
+
+	if (!userMemes || userMemes.length === 0) {
+		// Initialize storage with defaults on first load
+		await saveMemes(defaults);
+		return defaults;
+	}
+
+	// Always ensure any newly added preset in default_memes.json exists unless explicitly saved
+	const existingIds = new Set(userMemes.map(m => m.id));
+	let updated = false;
+	for (const preset of defaults) {
+		if (!existingIds.has(preset.id)) {
+			userMemes.push(preset);
+			updated = true;
+		}
+	}
+	if (updated) {
+		await saveMemes(userMemes);
+	}
+
+	return userMemes;
 }
 
 /**
