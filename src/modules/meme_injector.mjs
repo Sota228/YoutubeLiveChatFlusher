@@ -126,10 +126,11 @@ export class MemeInjector {
 	 * Plays the audio associated with a meme element.
 	 * @param {HTMLElement} memeElement the meme element that was clicked
 	 * @param {HTMLVideoElement|null} videoElement the main video element to duck volume
+	 * @returns {?HTMLAudioElement} the created audio element, or null if the meme has no audio
 	 */
 	static playAudio(memeElement, videoElement) {
 		const audioUrl = memeElement.dataset.audioUrl;
-		if (!audioUrl) return;
+		if (!audioUrl) return null;
 
 		const audio = new Audio(audioUrl);
 		audio.volume = 1.0; // Play meme loudly
@@ -159,5 +160,7 @@ export class MemeInjector {
 				videoElement.volume = originalVolume;
 			}
 		});
+
+		return audio;
 	}
 }

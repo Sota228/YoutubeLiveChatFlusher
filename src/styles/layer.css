@@ -287,10 +287,6 @@ small.original {
 	content: '🔊 ';
 	font-size: 0.8em;
 }
-.meme:hover {
-	filter: drop-shadow(0 0 8px currentColor) brightness(1.2);
-	transform: scale(1.05);
-}
 .meme.played {
 	color: var(--meme-color, #ff6ec7);
 	animation: flush var(--yt-lcf-animation-duration) linear var(--yt-lcf-animation-play-state),
@@ -350,4 +346,42 @@ small.original {
 
 #yt-lcf-score[hidden] {
 	display: none !important;
+}
+
+/* Meme click popup (center of video) */
+#yt-lcf-meme-popup {
+	/* Overrides `:host > div`'s flush-scroll animation, which would otherwise hijack `transform`. */
+	animation: none;
+	overflow: visible;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	z-index: 1001;
+	width: 92%;
+	padding: 0.2em 0.4em;
+	font-family: inherit;
+	font-size: 10vw; /* fallback; actual size is computed per-text in JS to fill the video width */
+	font-weight: 900;
+	line-height: 1.1;
+	white-space: nowrap;
+	text-align: center;
+	color: red;
+	text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 24px currentColor;
+	pointer-events: none;
+	user-select: none;
+	opacity: 0;
+	transform: translate(-50%, -50%) scale(0.85);
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#yt-lcf-meme-popup.show {
+	opacity: 0.8;
+	animation: meme-popup-bounce 0.45s cubic-bezier(.34, 1.56, .64, 1) forwards;
+}
+
+@keyframes meme-popup-bounce {
+	0% { transform: translate(-50%, -50%) scale(0.4); }
+	60% { transform: translate(-50%, -50%) scale(1.15); }
+	80% { transform: translate(-50%, -50%) scale(0.95); }
+	100% { transform: translate(-50%, -50%) scale(1); }
 }
