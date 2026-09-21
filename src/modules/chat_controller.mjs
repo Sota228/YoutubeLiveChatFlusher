@@ -38,6 +38,8 @@ export class LiveChatController {
 	segmenter = null;
 	/** @type {?MemeInjector} */
 	memeInjector = null;
+	/** @type {number} */
+	score = 0;
 
 	/**
 	 * @param {HTMLElement} player YouTube player element
@@ -69,11 +71,17 @@ export class LiveChatController {
 		root.addEventListener('click', e => {
 			const origin = /** @type {?HTMLElement} */ (e.target);
 			// Check if the click is on a meme comment or its child
-			const memeEl = origin?.closest?.('.meme') || (origin?.parentElement?.closest?.('.meme'));
+			const memeEl = /** @type {?HTMLElement} */ (origin?.closest?.('.meme') || (origin?.parentElement?.closest?.('.meme')));
 			if (memeEl) {
 				e.stopPropagation();
+				memeEl.classList.add('played');
+				memeEl.style.color = memeEl.dataset.color || '#ff6ec7';
+				if (!memeEl.dataset.scored) {
+					memeEl.dataset.scored = 'true';
+					this.addScore(100);
+				}
 				const videoElement = this.player.querySelector('video');
-				MemeInjector.playAudio(/** @type {HTMLElement} */ (memeEl), videoElement);
+				MemeInjector.playAudio(memeEl, videoElement);
 				return;
 			}
 			const interactiveTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
@@ -97,6 +105,14 @@ export class LiveChatController {
 
 		this.#layerSizeObserver = new MutationObserver(() => {
 			this.layer.autofit(s.others.layer_autofit > 0);
+		});
+
+		browser.storage.onChanged.addListener((changes, area) => {
+			if (area === 'local') {
+				s.load().then(() => {
+					this.updateScoreDisplay();
+				});
+			}
 		});
 	}
 
@@ -137,9 +153,57 @@ export class LiveChatController {
 
 		this.layer.autofit(s.others.layer_autofit > 0);
 
+		// Initialize score and display
+		const storageData = await browser.storage.local.get('meme_score');
+		this.score = typeof storageData.meme_score === 'number' ? storageData.meme_score : 0;
+		this.updateScoreDisplay();
+
 		// Initialize and start meme injector
 		this.memeInjector = new MemeInjector(this.layer, this.layoutCache);
 		this.memeInjector.start();
+	}
+
+	/**
+	 * Adds points to the score up to 999999 limit and persists to storage.
+	 * @param {number} pts points to add
+	 */
+	async addScore(pts) {
+		this.score = Math.min((this.score || 0) + pts, 999999);
+		await browser.storage.local.set({ meme_score: this.score });
+		this.updateScoreDisplay(true);
+	}
+
+	/**
+	 * Updates score display element position and content.
+	 * @param {boolean} [bump=false] whether to trigger score bounce animation
+	 */
+	updateScoreDisplay(bump = false) {
+		if (!this.layer) return;
+		if (!this.layer.scoreElement) {
+			this.layer.scoreElement = document.createElement('div');
+			this.layer.scoreElement.id = 'yt-lcf-score';
+		}
+		const el = this.layer.scoreElement;
+		if (!this.layer.root.contains(el)) {
+			this.layer.root.append(el);
+		}
+
+		const enabled = s.others.score_enabled ?? 1;
+		const pos = s.others.score_position || 'top-right';
+
+		if (!enabled) {
+			el.hidden = true;
+			return;
+		}
+		el.hidden = false;
+		el.className = pos;
+		el.textContent = `SCORE: ${this.score ?? 0}`;
+
+		if (bump) {
+			el.classList.remove('bump');
+			void el.offsetWidth;
+			el.classList.add('bump');
+		}
 	}
 
 	async #setupViewerStyle() {

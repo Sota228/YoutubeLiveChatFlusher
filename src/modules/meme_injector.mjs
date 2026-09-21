@@ -30,9 +30,9 @@ function createMemeElement(meme) {
 
 	el.append(header, body);
 
-	// Apply custom color if set
+	// Save custom color to dataset for when played
 	if (meme.color) {
-		el.style.color = meme.color;
+		el.dataset.color = meme.color;
 	}
 
 	return el;
@@ -133,7 +133,7 @@ export class MemeInjector {
 
 		const audio = new Audio(audioUrl);
 		audio.volume = 1.0; // Play meme loudly
-		
+
 		let originalVolume = 1.0;
 		if (videoElement) {
 			originalVolume = videoElement.volume;
