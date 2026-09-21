@@ -2,6 +2,7 @@ import { logger } from '../modules/logging.mjs';
 import { DEFAULT_CONFIG, store as s } from '../modules/store.mjs';
 
 import { TranslatorController } from '../modules/translator.mjs';
+import { loadMemes, addMeme, removeMeme, toggleMeme, readFileAsDataUrl } from '../modules/meme_manager.mjs';
 
 // @ts-expect-error
 self.browser ??= chrome;
@@ -47,7 +48,7 @@ for (const el of manifestElems) {
 const exportBtn = document.getElementById('btn-export');
 exportBtn?.addEventListener('click', () => {
 	const a = document.createElement('a');
-	const blob = new Blob([ JSON.stringify(s.data) ], { type: 'application/json' });
+	const blob = new Blob([JSON.stringify(s.data)], { type: 'application/json' });
 	const url = URL.createObjectURL(blob);
 	a.download = `ytlcf-config-${Date.now()}.json`;
 	a.href = url;
@@ -68,7 +69,7 @@ importBtn?.addEventListener('click', async () => {
 		logger.debug('Config file selected:', files[0].name);
 		const reader = new FileReader();
 		reader.onload = async e => {
-			const json = JSON.parse(/** @type {string} */ (e.target?.result));
+			const json = JSON.parse(/** @type {string} */(e.target?.result));
 			await s.load(json);
 			await browser.storage.local.set(s.data);
 			browser.runtime.sendMessage({ fire: 'reload' });
@@ -173,6 +174,91 @@ s.load().then(() => {
 
 	for (const el of form.querySelectorAll('[data-when-method="POST"]')) {
 		/** @type {HTMLElement} */ (el).hidden = s.translation.method !== 'POST';
+	}
+	updateMemeList();
+});
+
+// Meme Management
+const memeListTbody = document.querySelector('#meme-list tbody');
+const addMemeBtn = document.getElementById('btn-add-meme');
+
+async function updateMemeList() {
+	if (!memeListTbody) return;
+	memeListTbody.replaceChildren();
+	const memes = await loadMemes();
+	for (const meme of memes) {
+		const tr = document.createElement('tr');
+		
+		const tdText = document.createElement('td');
+		tdText.textContent = meme.text;
+		
+		const tdAudio = document.createElement('td');
+		const audio = document.createElement('audio');
+		audio.controls = true;
+		audio.src = meme.audioDataUrl;
+		audio.style.height = '30px';
+		tdAudio.append(audio);
+		
+		const tdColor = document.createElement('td');
+		const colorBox = document.createElement('div');
+		colorBox.style.backgroundColor = meme.color;
+		colorBox.style.width = '20px';
+		colorBox.style.height = '20px';
+		colorBox.style.borderRadius = '50%';
+		tdColor.append(colorBox);
+		
+		const tdEnabled = document.createElement('td');
+		const cbEnabled = document.createElement('input');
+		cbEnabled.type = 'checkbox';
+		cbEnabled.checked = meme.enabled;
+		cbEnabled.addEventListener('change', async () => {
+			await toggleMeme(meme.id);
+		});
+		tdEnabled.append(cbEnabled);
+		
+		const tdActions = document.createElement('td');
+		const btnRemove = document.createElement('button');
+		btnRemove.textContent = 'Remove';
+		btnRemove.addEventListener('click', async () => {
+			await removeMeme(meme.id);
+			updateMemeList();
+		});
+		tdActions.append(btnRemove);
+		
+		tr.append(tdText, tdAudio, tdColor, tdEnabled, tdActions);
+		memeListTbody.append(tr);
+	}
+}
+
+addMemeBtn?.addEventListener('click', async () => {
+	const textInput = /** @type {HTMLInputElement} */ (document.getElementById('new_meme_text'));
+	const audioInput = /** @type {HTMLInputElement} */ (document.getElementById('new_meme_audio'));
+	const colorInput = /** @type {HTMLInputElement} */ (document.getElementById('new_meme_color'));
+	
+	const text = textInput.value.trim();
+	const file = audioInput.files?.[0];
+	
+	if (!text || !file) {
+		alert('Please enter text and select an audio file.');
+		return;
+	}
+	
+	try {
+		const audioDataUrl = await readFileAsDataUrl(file);
+		await addMeme({
+			text,
+			audioDataUrl,
+			color: colorInput.value,
+			enabled: true
+		});
+		
+		textInput.value = '';
+		audioInput.value = '';
+		updateMemeList();
+		alert('Meme added successfully!');
+	} catch (e) {
+		logger.error('Failed to add meme:', e);
+		alert('Failed to add meme.');
 	}
 });
 
@@ -295,17 +381,17 @@ tester.addEventListener('submit', e => {
 	if (btn) btn.disabled = true;
 
 	controller.translate(test_translation_text.value, navigator.language)
-	.then(res => {
-		test_translation_output.value = JSON.stringify(res);
-	})
-	.catch(err => {
-		logger.error(err);
-		test_translation_output.value = Error.isError(err) && err.stack || String(err);
-	})
-	.finally(() => {
-		clearInterval(timer);
-		if (btn) btn.disabled = false;
-	});
+		.then(res => {
+			test_translation_output.value = JSON.stringify(res);
+		})
+		.catch(err => {
+			logger.error(err);
+			test_translation_output.value = Error.isError(err) && err.stack || String(err);
+		})
+		.finally(() => {
+			clearInterval(timer);
+			if (btn) btn.disabled = false;
+		});
 });
 
 document.getElementById('btn-reset-translation')?.addEventListener('click', () => {

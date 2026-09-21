@@ -7,6 +7,7 @@ import { LiveChatPanel, WrapStyleDefinitions } from './chat_panel.mjs';
 import { LiveChatContextMenu } from './chat_contextmenu.mjs';
 import { LiveChatItemFactory, EmojiModeEnum, renderChatItem, updateMutedWordsList, updateTlExclusionList } from './chat_message.mjs';
 import { LiveChatLayoutCache, layoutChatItem } from './chat_layout.mjs';
+import { MemeInjector } from './meme_injector.mjs';
 
 export const SimultaneousModeEnum = Object.freeze({
 	ALL: 0,
@@ -35,6 +36,8 @@ export class LiveChatController {
 	listening = false;
 	/** @type {?VideoSegmentationExecutor} */
 	segmenter = null;
+	/** @type {?MemeInjector} */
+	memeInjector = null;
 
 	/**
 	 * @param {HTMLElement} player YouTube player element
@@ -65,6 +68,14 @@ export class LiveChatController {
 		}, { passive: false });
 		root.addEventListener('click', e => {
 			const origin = /** @type {?HTMLElement} */ (e.target);
+			// Check if the click is on a meme comment or its child
+			const memeEl = origin?.closest?.('.meme') || (origin?.parentElement?.closest?.('.meme'));
+			if (memeEl) {
+				e.stopPropagation();
+				const videoElement = this.player.querySelector('video');
+				MemeInjector.playAudio(/** @type {HTMLElement} */ (memeEl), videoElement);
+				return;
+			}
 			const interactiveTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
 			if (interactiveTags.includes(origin?.tagName || 'BODY')) {
 				e.stopPropagation();
@@ -125,6 +136,10 @@ export class LiveChatController {
 		this.#startSendingFrame(video);
 
 		this.layer.autofit(s.others.layer_autofit > 0);
+
+		// Initialize and start meme injector
+		this.memeInjector = new MemeInjector(this.layer, this.layoutCache);
+		this.memeInjector.start();
 	}
 
 	async #setupViewerStyle() {
@@ -796,6 +811,7 @@ export class LiveChatController {
 
 	close() {
 		this.unlisten();
+		this.memeInjector?.stop();
 		this.layer.clear();
 	}
 }

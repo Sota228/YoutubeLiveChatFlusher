@@ -16,7 +16,8 @@
 					/
 					<a href=https://github.com/ys-j/YoutubeLiveChatFlusher/wiki target=_blank>Wiki</a>
 					/
-					<a href=https://github.com/ys-j/YoutubeLiveChatFlusher/releases target=_blank data-i18n=releaseNote></a>
+					<a href=https://github.com/ys-j/YoutubeLiveChatFlusher/releases target=_blank
+						data-i18n=releaseNote></a>
 			<tr>
 				<th data-i18n=configFile>
 				<td>
@@ -174,6 +175,43 @@
 		</dl>
 	</section>
 	<section>
+		<h2>Net Memes</h2>
+		<dl>
+			<dt>Registered Memes</dt>
+			<dd>
+				<table id="meme-list" style="width: 100%; border-collapse: collapse; margin-bottom: 1em;">
+					<thead>
+						<tr>
+							<th>Text</th>
+							<th>Audio</th>
+							<th>Color</th>
+							<th>Enabled</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<!-- Memes will be loaded here -->
+					</tbody>
+				</table>
+				<div class="flex" style="gap: 1em; align-items: flex-end;">
+					<div style="flex: 1;">
+						<label for="new_meme_text">Meme Text</label>
+						<input type="text" id="new_meme_text" placeholder="e.g. wwww">
+					</div>
+					<div style="flex: 1;">
+						<label for="new_meme_audio">Audio File</label>
+						<input type="file" id="new_meme_audio" accept="audio/*">
+					</div>
+					<div style="flex: 0 0 60px;">
+						<label for="new_meme_color">Color</label>
+						<input type="color" id="new_meme_color" value="#ff6ec7">
+					</div>
+					<button type="button" id="btn-add-meme" class="primary">Add Meme</button>
+				</div>
+			</dd>
+		</dl>
+	</section>
+	<section>
 		<h2 data-i18n=translation></h2>
 		<dl>
 			<dt data-i18n=translationBlacklist>
@@ -183,7 +221,8 @@
 					<span data-i18n=regexp></span>
 				</label>
 				<br>
-				<textarea name=translation_blacklist rows=20 data-i18n-placeholder=placeholder_mutedWordsList></textarea>
+				<textarea name=translation_blacklist rows=20
+					data-i18n-placeholder=placeholder_mutedWordsList></textarea>
 			<dt data-i18n=translator>
 			<dd>
 				<select name=translation_translator>
@@ -235,7 +274,8 @@
 						<td>
 							<input id=translation_modelName name=translation_modelName>
 				</table>
-				<textarea name=translation_bodyContent rows=10 data-when-method=POST data-i18n-placeholder=translation_request_body></textarea>
+				<textarea name=translation_bodyContent rows=10 data-when-method=POST
+					data-i18n-placeholder=translation_request_body></textarea>
 			<dt data-i18n=translation_response>
 			<dd>
 				<table>
@@ -256,7 +296,8 @@
 		</dl>
 		<div>
 			<div class=flex>
-				<input type=search name=test_translation_text form=translation_test data-i18n-placeholder=placeholder_test_translation_text>
+				<input type=search name=test_translation_text form=translation_test
+					data-i18n-placeholder=placeholder_test_translation_text>
 				<button id=btn-test-translation form=translation_test data-i18n=test_translation></button>
 			</div>
 			<pre><output name=test_translation_output form=translation_test></output></pre>

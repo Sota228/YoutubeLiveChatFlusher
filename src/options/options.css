@@ -15,9 +15,11 @@
 	--accent-text-color: var(--color-white);
 	--border-color: color-mix(in srgb, var(--text-color) 20%, transparent);
 }
+
 * {
 	box-sizing: border-box;
 }
+
 body {
 	accent-color: var(--accent-color);
 	background-color: var(--background-color);
@@ -26,72 +28,93 @@ body {
 	font-size: 14px;
 	margin: 0;
 }
+
 section {
 	padding: 1em;
 }
-section + section {
+
+section+section {
 	border-top: 1px solid var(--border-color);
 }
+
 section:last-of-type {
 	display: flex;
 	align-items: center;
 }
-h1, h2 {
+
+h1,
+h2 {
 	color: var(--text-color);
 	font-size: 1.2em;
 	margin: .5em 0;
 }
+
 a {
 	color: var(--accent-color);
 	text-decoration: none;
 }
+
 a:hover {
 	color: var(--accent-color-hover);
 	text-decoration: underline;
 }
+
 col.max {
 	width: 100%;
 }
+
 th {
 	color: var(--text-color);
 	font-weight: normal;
 	text-align: start;
 	white-space: nowrap;
+
 	&:only-of-type {
 		padding-inline-end: .5em;
 	}
 }
+
 td {
 	color: var(--text-color-deemphasized);
 }
-dl.note, pre {
+
+dl.note,
+pre {
 	background-color: color-mix(in srgb, var(--text-color) 3.5%, transparent);
 	border-radius: 8px;
 	margin: .75em 0 .75em -1em;
 	padding: .75em 1em;
+
 	[data-browser="chrome"] & ul {
 		padding-inline-start: 1em;
 	}
+
 	[data-browser="firefox"] & ul {
 		padding-inline-start: 0;
 	}
 }
+
 dt {
 	color: var(--text-color);
 	font-weight: bolder;
-	dd + & {
+
+	dd+& {
 		margin: 1em 0 .25em;
 	}
 }
+
 dd {
 	color: var(--text-color-deemphasized);
+
 	[data-browser="chrome"] & {
 		margin-inline-start: 1em;
 	}
+
 	&.preline {
 		white-space: pre-line;
 	}
 }
+
 button {
 	appearance: none;
 	background-color: color-mix(in srgb, var(--text-color) 7%, transparent);
@@ -102,46 +125,58 @@ button {
 	padding: .45em 1em;
 	white-space: nowrap;
 }
+
 button:hover {
 	background-color: color-mix(in srgb, var(--text-color) 14%, transparent);
 }
+
 button:disabled {
 	opacity: .25;
 	pointer-events: none;
 }
+
 button.primary {
 	background-color: var(--accent-color);
 	color: var(--accent-text-color);
 }
+
 button.primary:hover {
 	background-color: var(--accent-color-hover);
 }
+
 label {
 	display: inline-block;
 	white-space: nowrap;
+
 	&:not(:last-of-type) {
 		margin-inline-end: 1em;
 	}
 }
+
 input[type="radio"] {
 	height: 16px;
 	width: 16px;
 	vertical-align: -3px;
+
 	&:not(:checked) {
 		appearance: none;
 		border: 1px solid var(--border-color);
 		border-radius: 50%;
+
 		&:hover {
 			border-color: color-mix(in srgb, var(--text-color) 30%, transparent);
 		}
 	}
-	& + span {
+
+	&+span {
 		padding-inline-start: .25em;
 	}
 }
-input:checked + span {
+
+input:checked+span {
 	color: var(--text-color);
 }
+
 input:is(:not([type]), [type="search"], [type="text"], [type="url"]),
 textarea {
 	background-color: transparent;
@@ -150,13 +185,16 @@ textarea {
 	color: inherit;
 	padding: 4px;
 	width: 100%;
+
 	&:invalid {
 		outline: 1px solid red;
 	}
+
 	&[name^="hotkey"] {
 		text-align: center;
 	}
 }
+
 .flex {
 	display: flex;
 }
@@ -167,10 +205,12 @@ textarea {
 		--accent-color-hover: var(--color-cyan-20);
 		--accent-text-color: var(--color-gray-100);
 	}
+
 	[data-browser="chrome"] {
 		--background-color: #292a2d;
 		--text-color: #c4c7c5;
 	}
+
 	[data-browser="firefox"] {
 		--background-color: var(--color-gray-80);
 		--text-color: var(--color-gray-05);
