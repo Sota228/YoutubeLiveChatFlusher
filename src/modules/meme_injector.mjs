@@ -38,9 +38,26 @@ function createMemeElement(meme) {
 	return el;
 }
 
+/**
+ * Picks a batch size from 1..max, weighted so smaller counts (especially 1) are far more likely
+ * (weight for size k is 2^(max-k), so 1 is always the most likely outcome).
+ * @param {number} max maximum batch size (inclusive)
+ * @returns {number}
+ */
+function pickWeightedBatchSize(max) {
+	const weights = Array.from({ length: max }, (_, i) => 2 ** (max - 1 - i));
+	const total = weights.reduce((a, b) => a + b, 0);
+	let r = Math.random() * total;
+	for (let k = 0; k < max; k++) {
+		r -= weights[k];
+		if (r < 0) return k + 1;
+	}
+	return max;
+}
+
 export class MemeInjector {
 	/** @type {number} */
-	#intervalId = 0;
+	#timerId = 0;
 
 	/** @type {import('./chat_layer.mjs').LiveChatLayer} */
 	#layer;
@@ -48,25 +65,20 @@ export class MemeInjector {
 	/** @type {import('./chat_layout.mjs').LiveChatLayoutCache} */
 	#layoutCache;
 
-	/** @type {number} interval in ms between meme injections */
-	#intervalMs;
-
 	/** @type {import('./meme_manager.mjs').MemeEntry[]} cached enabled memes */
 	#memes = [];
 
 	/**
 	 * @param {import('./chat_layer.mjs').LiveChatLayer} layer danmaku layer
 	 * @param {import('./chat_layout.mjs').LiveChatLayoutCache} layoutCache layout cache
-	 * @param {number} [intervalMs=8000] interval between meme injections in ms
 	 */
-	constructor(layer, layoutCache, intervalMs = 8000) {
+	constructor(layer, layoutCache) {
 		this.#layer = layer;
 		this.#layoutCache = layoutCache;
-		this.#intervalMs = intervalMs;
 	}
 
 	/**
-	 * Starts injecting memes at regular intervals.
+	 * Starts injecting memes at randomized intervals.
 	 */
 	async start() {
 		this.stop();
@@ -74,18 +86,16 @@ export class MemeInjector {
 
 		if (this.#memes.length === 0) return;
 
-		this.#intervalId = setInterval(() => {
-			this.#injectRandomMeme();
-		}, this.#intervalMs);
+		this.#scheduleNext();
 	}
 
 	/**
 	 * Stops meme injection.
 	 */
 	stop() {
-		if (this.#intervalId) {
-			clearInterval(this.#intervalId);
-			this.#intervalId = 0;
+		if (this.#timerId) {
+			clearTimeout(this.#timerId);
+			this.#timerId = 0;
 		}
 	}
 
@@ -97,12 +107,36 @@ export class MemeInjector {
 	}
 
 	/**
-	 * Injects a random meme into the layer.
+	 * Schedules the next injection after a randomized delay, re-drawing the delay each time.
 	 */
-	#injectRandomMeme() {
+	#scheduleNext() {
+		const min = Math.max(0, s.others.meme_interval_min ?? 3) * 1000;
+		const max = Math.max(min, (s.others.meme_interval_max ?? 15) * 1000);
+		const delay = min + Math.random() * (max - min);
+		this.#timerId = setTimeout(() => {
+			this.#injectBatch();
+			this.#scheduleNext();
+		}, delay);
+	}
+
+	/**
+	 * Injects a randomly-sized batch of memes (weighted toward smaller counts).
+	 */
+	#injectBatch() {
 		if (this.#memes.length === 0) return;
 		if (this.#layer.element.hidden) return;
 
+		const maxBatch = Math.max(1, s.others.meme_batch_max ?? 3);
+		const count = pickWeightedBatchSize(maxBatch);
+		for (let i = 0; i < count; i++) {
+			this.#injectRandomMeme();
+		}
+	}
+
+	/**
+	 * Injects a single random meme into the layer.
+	 */
+	#injectRandomMeme() {
 		const meme = this.#memes[Math.floor(Math.random() * this.#memes.length)];
 		const el = createMemeElement(meme);
 
@@ -112,17 +146,6 @@ export class MemeInjector {
 
 		if (this.#layer.controller && typeof this.#layer.controller.spawnedMemeCount === 'number') {
 			this.#layer.controller.spawnedMemeCount++;
-		}
-	}
-
-	/**
-	 * Sets the injection interval.
-	 * @param {number} ms interval in milliseconds
-	 */
-	setInterval(ms) {
-		this.#intervalMs = ms;
-		if (this.#intervalId) {
-			this.start(); // restart with new interval
 		}
 	}
 

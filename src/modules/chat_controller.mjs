@@ -124,8 +124,13 @@ export class LiveChatController {
 					memeEl.dataset.scored = 'true';
 					this.clickedMemeCount++;
 					this.addScore(100);
+					if (s.others.timer_enabled ?? 0) {
+						const maxTime = s.others.timer_duration ?? 60;
+						this.remainingTime = Math.min(this.remainingTime + 5, maxTime);
+						this.updateTimerDisplay();
+					}
 				}
-				this.#showMemePopup(memeEl);
+				this.#showMemePopup(memeEl, true);
 				return;
 			}
 			const interactiveTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
@@ -147,7 +152,7 @@ export class LiveChatController {
 			// Skip persistent overlay elements; only recycle finished flush-scroll chat messages.
 			if (elem.id.startsWith('yt-lcf-')) return;
 			if (!this.isTimeUp && elem.classList.contains('meme') && !elem.classList.contains('played') && (s.others.meme_miss_penalty_enabled ?? 1)) {
-				this.#showMemePopup(elem);
+				this.#showMemePopup(elem, false);
 				this.#applyPenalty();
 			}
 			if (elem.parentNode === root) {
@@ -229,11 +234,12 @@ export class LiveChatController {
 	}
 
 	/**
-	 * Shows the clicked meme's text at the center of the video and plays its audio.
-	 * Only the most recent click is shown; any previous popup/audio is cancelled immediately.
-	 * @param {HTMLElement} memeEl the meme element that was clicked
+	 * Shows a meme's text at the center of the video and plays its audio.
+	 * Only the most recent trigger is shown; any previous popup/audio is cancelled immediately.
+	 * @param {HTMLElement} memeEl the meme element that was clicked or missed
+	 * @param {boolean} caught whether the meme was clicked (green) rather than missed (red)
 	 */
-	#showMemePopup(memeEl) {
+	#showMemePopup(memeEl, caught) {
 		this.#activeMemeAudio?.pause();
 		this.#activeMemeAudio = null;
 		clearTimeout(this.#memePopupHideTimer);
@@ -242,6 +248,7 @@ export class LiveChatController {
 		const text = memeEl.dataset.text || '';
 		const rect = this.layer.element.getBoundingClientRect();
 		popup.textContent = text;
+		popup.classList.toggle('caught', caught);
 		popup.style.fontSize = `${fitMemePopupFontSize(text, rect.width * 0.92, rect.height * 0.4)}px`;
 		popup.classList.remove('show');
 		void popup.offsetWidth; // restart the pop-in animation

@@ -379,6 +379,10 @@ small.original {
 	animation: meme-popup-bounce 0.45s cubic-bezier(.34, 1.56, .64, 1) forwards;
 }
 
+#yt-lcf-meme-popup.caught {
+	color: #2ecc40;
+}
+
 @keyframes meme-popup-bounce {
 	0% { transform: translate(-50%, -50%) scale(0.4); }
 	60% { transform: translate(-50%, -50%) scale(1.15); }
