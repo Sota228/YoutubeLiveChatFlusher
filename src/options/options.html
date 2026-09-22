@@ -214,6 +214,36 @@
 					<button type="button" id="btn-add-meme" class="primary">Add Meme</button>
 				</div>
 			</dd>
+			<dt>🤖 AI Meme Selection (Gemini API)</dt>
+			<dd>
+				<table>
+					<tr>
+						<th>Gemini API Key</th>
+						<td>
+							<div style="display:flex;gap:.5em;align-items:center;">
+								<input type="password" id="gemini_api_key" name="gemini_api_key"
+									placeholder="AIza..." style="flex:1;font-family:monospace;">
+								<button type="button" id="btn-toggle-apikey" title="Show/Hide">👁</button>
+							</div>
+							<small style="color:gray;">
+								APIキーは <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a> で無料取得できます。
+								未入力の場合はランダム選択にフォールバックします。
+							</small>
+						</td>
+					<tr>
+						<th>How it works</th>
+						<td>
+							<small>
+								直近のライブチャットのコメントをGemini AIに送り、<br>
+								今の雰囲気に最も合ったミームを自動で選択して流します。<br>
+								・広告中はミームを自動停止します。<br>
+								・AI判断ができない場合はランダム選択します。
+							</small>
+						</td>
+				</table>
+				<button type="button" id="btn-save-gemini-key" class="primary" style="margin-top:.5em;">APIキーを保存</button>
+				<span id="gemini-key-status" style="margin-left:.5em;font-size:.85em;"></span>
+			</dd>
 			<dt>Score Display</dt>
 			<dd>
 				<table>

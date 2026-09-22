@@ -1,11 +1,25 @@
 /**
  * @module meme_injector
  * @description Injects meme comments into the danmaku layer at random intervals.
+ *              Uses Gemini API (if API key is configured) to pick the best meme
+ *              based on recent live chat content. Falls back to Math.random().
+ *              Automatically pauses injection while YouTube ads are playing.
  */
 
 import { getEnabledMemes } from './meme_manager.mjs';
 import { layoutChatItem } from './chat_layout.mjs';
 import { store as s } from './store.mjs';
+import { isAdShowing } from './utils.mjs';
+
+// meme_ai.mjs is loaded lazily via dynamic import so a failure in that module
+// does NOT cascade and break the entire chat rendering pipeline.
+/** @type {typeof import('./meme_ai.mjs').selectMemeWithAI | null} */
+let selectMemeWithAI = null;
+import('./meme_ai.mjs').then(m => {
+	selectMemeWithAI = m.selectMemeWithAI;
+}).catch(err => {
+	console.warn('[MEME-AI] Failed to load meme_ai.mjs; AI selection disabled.', err);
+});
 
 /**
  * Creates a meme comment element.
@@ -39,7 +53,7 @@ function createMemeElement(meme) {
 }
 
 export class MemeInjector {
-	/** @type {number} */
+	/** @type {number | ReturnType<typeof setTimeout>} */
 	#intervalId = 0;
 
 	/** @type {import('./chat_layer.mjs').LiveChatLayer} */
@@ -48,25 +62,55 @@ export class MemeInjector {
 	/** @type {import('./chat_layout.mjs').LiveChatLayoutCache} */
 	#layoutCache;
 
-	/** @type {number} interval in ms between meme injections */
+	/** @type {number} base interval in ms between meme injections */
 	#intervalMs;
 
 	/** @type {import('./meme_manager.mjs').MemeEntry[]} cached enabled memes */
 	#memes = [];
 
 	/**
+	 * Ring buffer of recent chat texts (newest first, max 20 entries).
+	 * @type {string[]}
+	 */
+	#recentChatTexts = [];
+
+	/** @type {boolean} whether the injector loop is running */
+	#running = false;
+
+	/**
+	 * The YouTube player element used for ad detection.
+	 * @type {HTMLElement | null}
+	 */
+	#player = null;
+
+	/**
 	 * @param {import('./chat_layer.mjs').LiveChatLayer} layer danmaku layer
 	 * @param {import('./chat_layout.mjs').LiveChatLayoutCache} layoutCache layout cache
-	 * @param {number} [intervalMs=8000] interval between meme injections in ms
+	 * @param {number} [intervalMs=8000] base interval between meme injections in ms
+	 * @param {HTMLElement | null} [player] YouTube player element for ad detection
 	 */
-	constructor(layer, layoutCache, intervalMs = 8000) {
+	constructor(layer, layoutCache, intervalMs = 8000, player = null) {
 		this.#layer = layer;
 		this.#layoutCache = layoutCache;
 		this.#intervalMs = intervalMs;
+		this.#player = player;
 	}
 
 	/**
-	 * Starts injecting memes at regular intervals.
+	 * Adds a chat text to the recent chat ring buffer.
+	 * Call this from the controller whenever a new chat message is rendered.
+	 * @param {string} text raw chat message text
+	 */
+	addChatText(text) {
+		if (!text?.trim()) return;
+		this.#recentChatTexts.unshift(text.trim());
+		if (this.#recentChatTexts.length > 20) {
+			this.#recentChatTexts.length = 20;
+		}
+	}
+
+	/**
+	 * Starts injecting memes at random intervals.
 	 */
 	async start() {
 		this.stop();
@@ -74,17 +118,31 @@ export class MemeInjector {
 
 		if (this.#memes.length === 0) return;
 
-		this.#intervalId = setInterval(() => {
-			this.#injectRandomMeme();
-		}, this.#intervalMs);
+		this.#running = true;
+		this.#scheduleNext();
+	}
+
+	/**
+	 * Schedules the next meme injection with a random jitter applied to the base interval.
+	 */
+	#scheduleNext() {
+		if (!this.#running) return;
+		// Random ±50% jitter: base=8000ms → range 4000〜12000ms
+		const jitter = this.#intervalMs * 0.5;
+		const delay = this.#intervalMs + (Math.random() * jitter * 2 - jitter);
+		this.#intervalId = setTimeout(async () => {
+			await this.#injectMeme();
+			this.#scheduleNext();
+		}, delay);
 	}
 
 	/**
 	 * Stops meme injection.
 	 */
 	stop() {
+		this.#running = false;
 		if (this.#intervalId) {
-			clearInterval(this.#intervalId);
+			clearTimeout(this.#intervalId);
 			this.#intervalId = 0;
 		}
 	}
@@ -97,13 +155,24 @@ export class MemeInjector {
 	}
 
 	/**
-	 * Injects a random meme into the layer.
+	 * Injects one meme. Skips if:
+	 *  - layer is hidden
+	 *  - a YouTube ad is currently playing
+	 * Tries AI selection first; falls back to random.
 	 */
-	#injectRandomMeme() {
+	async #injectMeme() {
 		if (this.#memes.length === 0) return;
 		if (this.#layer.element.hidden) return;
 
-		const meme = this.#memes[Math.floor(Math.random() * this.#memes.length)];
+		// Ad guard: skip meme during YouTube ads (reuses existing utils.mjs helper)
+		if (this.#player && isAdShowing(this.#player)) {
+			console.info('[MEME] Ad detected — skipping meme injection.');
+			return;
+		}
+
+		const meme = await this.#selectMeme();
+		if (!meme) return;
+
 		const el = createMemeElement(meme);
 
 		/** @type {["dense", "random"]} */
@@ -116,12 +185,46 @@ export class MemeInjector {
 	}
 
 	/**
+	 * Selects a meme via Gemini AI if an API key is configured and enough chat
+	 * context has been gathered; otherwise falls back to Math.random().
+	 * @returns {Promise<import('./meme_manager.mjs').MemeEntry | null>}
+	 */
+	async #selectMeme() {
+		const apiKey = s.others.gemini_api_key ?? '';
+
+		if (selectMemeWithAI && apiKey && this.#recentChatTexts.length >= 3) {
+			try {
+				const selectedId = await selectMemeWithAI(
+					this.#recentChatTexts,
+					this.#memes,
+					apiKey,
+				);
+				if (selectedId) {
+					return this.#memes.find(m => m.id === selectedId) ?? this.#randomMeme();
+				}
+			} catch (err) {
+				console.warn('[MEME-AI] selectMemeWithAI error, falling back to random:', err);
+			}
+		}
+
+		return this.#randomMeme();
+	}
+
+	/**
+	 * Returns a uniformly random meme from the cache.
+	 * @returns {import('./meme_manager.mjs').MemeEntry}
+	 */
+	#randomMeme() {
+		return this.#memes[Math.floor(Math.random() * this.#memes.length)];
+	}
+
+	/**
 	 * Sets the injection interval.
-	 * @param {number} ms interval in milliseconds
+	 * @param {number} ms base interval in milliseconds
 	 */
 	setInterval(ms) {
 		this.#intervalMs = ms;
-		if (this.#intervalId) {
+		if (this.#running) {
 			this.start(); // restart with new interval
 		}
 	}

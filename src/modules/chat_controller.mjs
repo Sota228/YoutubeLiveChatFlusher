@@ -212,9 +212,8 @@ export class LiveChatController {
 		this.startTimer();
 
 		// Initialize and start meme injector
-		this.memeInjector = new MemeInjector(this.layer, this.layoutCache);
+		this.memeInjector = new MemeInjector(this.layer, this.layoutCache, 8000, this.player);
 		this.memeInjector.start();
-		refreshEnabledMemesCache();
 	}
 
 	/**
@@ -1018,6 +1017,12 @@ export class LiveChatController {
 				/** @type { ["dense", "random"] } */
 				const modeOptions = ['dense', 'random'];
 				layoutChatItem(el, this.layoutCache, modeOptions[s.others.density]);
+
+				// Feed chat text to the meme AI for context-aware meme selection
+				const chatText = el.getAttribute('data-text') || el.querySelector('.message')?.textContent || '';
+				if (chatText && this.memeInjector) {
+					this.memeInjector.addChatText(chatText);
+				}
 			}
 		}).catch(logger.warn);
 	}

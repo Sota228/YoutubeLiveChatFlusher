@@ -45,6 +45,8 @@ export const DEFAULT_CONFIG = Object.freeze({
 		timer_enabled: 1,
 		timer_duration: 60,
 		timer_position: 'top-left',
+		/** @type {string} Gemini API key for AI-driven meme selection */
+		gemini_api_key: '',
 	},
 	parts: {
 		normal: { photo: false, name: false, message: true, color: '', strokeColor: '' },
