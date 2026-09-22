@@ -131,9 +131,16 @@ export class LiveChatController {
 			const interactiveTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
 			if (interactiveTags.includes(origin?.tagName || 'BODY')) {
 				e.stopPropagation();
-			} else {
-				origin?.parentElement?.click();
+				return;
 			}
+			// Non-meme text comment: apply the miss-click penalty (checked once per real click).
+			const textEl = /** @type {?HTMLElement} */ (origin?.closest?.('.text'));
+			if (textEl) {
+				e.stopPropagation();
+				this.#applyPenalty();
+				return;
+			}
+			origin?.parentElement?.click();
 		}, { passive: true });
 		root.addEventListener('animationend', e => {
 			const elem = /** @type {HTMLElement} */ (e.target);
@@ -246,6 +253,31 @@ export class LiveChatController {
 		} catch (err) {
 			logger.error('Failed to play meme audio.\nCaused by:', err);
 		}
+	}
+
+	/**
+	 * Applies the miss-click penalty for clicking a non-meme comment: -150 score, and
+	 * (when the timer is enabled) -10 seconds on the countdown, clamped at 0.
+	 */
+	#applyPenalty() {
+		this.addScore(-150);
+		this.#flashPenalty();
+
+		if (!(s.others.timer_enabled ?? 0)) return;
+		this.remainingTime = Math.max(0, this.remainingTime - 10);
+		this.updateTimerDisplay();
+		if (this.remainingTime <= 0) {
+			this.stopTimer();
+			this.onTimeUp();
+		}
+	}
+
+	/** Briefly flashes the video area red to signal a penalty. */
+	#flashPenalty() {
+		const el = this.layer.penaltyFlashElement;
+		el.classList.remove('flash');
+		void el.offsetWidth; // restart the flash animation
+		el.classList.add('flash');
 	}
 
 	/**
