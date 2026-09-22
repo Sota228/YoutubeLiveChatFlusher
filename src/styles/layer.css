@@ -348,8 +348,8 @@ small.original {
 	display: none !important;
 }
 
-/* Meme click popup (center of video) */
-#yt-lcf-meme-popup {
+/* Meme click popup (center of video, or offset when several are shown at once) */
+:host > .meme-popup {
 	/* Overrides `:host > div`'s flush-scroll animation, which would otherwise hijack `transform`. */
 	animation: none;
 	overflow: visible;
@@ -357,13 +357,14 @@ small.original {
 	top: 50%;
 	left: 50%;
 	z-index: 1001;
-	width: 92%;
+	width: 80%;
 	padding: 0.2em 0.4em;
 	font-family: inherit;
 	font-size: 10vw; /* fallback; actual size is computed per-text in JS to fill the video width */
 	font-weight: 900;
 	line-height: 1.1;
-	white-space: nowrap;
+	white-space: normal;
+	overflow-wrap: anywhere;
 	text-align: center;
 	color: red;
 	text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 24px currentColor;
@@ -374,12 +375,12 @@ small.original {
 	transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-#yt-lcf-meme-popup.show {
+:host > .meme-popup.show {
 	opacity: 0.8;
 	animation: meme-popup-bounce 0.45s cubic-bezier(.34, 1.56, .64, 1) forwards;
 }
 
-#yt-lcf-meme-popup.caught {
+:host > .meme-popup.caught {
 	color: #2ecc40;
 }
 

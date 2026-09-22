@@ -68,8 +68,6 @@ export class LiveChatLayer {
 		});
 		this.scoreElement = document.createElement('div');
 		this.scoreElement.id = 'yt-lcf-score';
-		this.memePopupElement = document.createElement('div');
-		this.memePopupElement.id = 'yt-lcf-meme-popup';
 		this.timerElement = document.createElement('div');
 		this.timerElement.id = 'yt-lcf-timer';
 		this.darkOverlayElement = document.createElement('div');
@@ -80,7 +78,7 @@ export class LiveChatLayer {
 		this.resultModalElement.hidden = true;
 		this.penaltyFlashElement = document.createElement('div');
 		this.penaltyFlashElement.id = 'yt-lcf-penalty-flash';
-		this.root.append(link, ...styles, this.scoreElement, this.memePopupElement, this.timerElement, this.darkOverlayElement, this.resultModalElement, this.penaltyFlashElement);
+		this.root.append(link, ...styles, this.scoreElement, this.timerElement, this.darkOverlayElement, this.resultModalElement, this.penaltyFlashElement);
 		this.#initialElemCount = this.root.childElementCount;
 
 		const mutationObserver = new MutationObserver(() => {
@@ -103,7 +101,7 @@ export class LiveChatLayer {
 	 * @returns {LiveChatLayer} layer
 	 */
 	clear() {
-		const preserved = this.root.querySelectorAll('link,style,#yt-lcf-score,#yt-lcf-meme-popup,#yt-lcf-timer,#yt-lcf-dark-overlay,#yt-lcf-result-modal,#yt-lcf-penalty-flash');
+		const preserved = this.root.querySelectorAll('link,style,#yt-lcf-score,#yt-lcf-timer,#yt-lcf-dark-overlay,#yt-lcf-result-modal,#yt-lcf-penalty-flash,.meme-popup');
 		this.root.replaceChildren(...preserved);
 		return this;
 	}

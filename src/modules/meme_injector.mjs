@@ -228,42 +228,19 @@ export class MemeInjector {
 	}
 
 	/**
-	 * Plays the audio associated with a meme element.
-	 * @param {HTMLElement} memeElement the meme element that was clicked
-	 * @param {HTMLVideoElement|null} videoElement the main video element to duck volume
+	 * Plays the audio associated with a meme element. Multiple calls can overlap; video volume
+	 * ducking (if desired) is the caller's responsibility so overlapping plays don't fight over it.
+	 * @param {HTMLElement} memeElement the meme element that was clicked or missed
 	 * @returns {?HTMLAudioElement} the created audio element, or null if the meme has no audio
 	 */
-	static playAudio(memeElement, videoElement) {
+	static playAudio(memeElement) {
 		const audioUrl = memeElement.dataset.audioUrl;
 		if (!audioUrl) return null;
 
 		const audio = new Audio(audioUrl);
 		audio.volume = 1.0; // Play meme loudly
-
-		let originalVolume = 1.0;
-		if (videoElement) {
-			originalVolume = videoElement.volume;
-			// Lower the video volume to 20% of its original volume
-			videoElement.volume = originalVolume * 0.2;
-		}
-
-		audio.onended = () => {
-			if (videoElement) {
-				videoElement.volume = originalVolume;
-			}
-		};
-		// Also restore volume if there's an error or it gets paused somehow
-		audio.onpause = audio.onerror = () => {
-			if (videoElement && videoElement.volume < originalVolume) {
-				videoElement.volume = originalVolume;
-			}
-		};
-
 		audio.play().catch(err => {
 			console.warn('Failed to play meme audio:', err);
-			if (videoElement) {
-				videoElement.volume = originalVolume;
-			}
 		});
 
 		return audio;
