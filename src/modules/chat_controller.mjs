@@ -8,6 +8,7 @@ import { LiveChatContextMenu } from './chat_contextmenu.mjs';
 import { LiveChatItemFactory, EmojiModeEnum, renderChatItem, updateMutedWordsList, updateTlExclusionList } from './chat_message.mjs';
 import { LiveChatLayoutCache, layoutChatItem } from './chat_layout.mjs';
 import { MemeInjector } from './meme_injector.mjs';
+import { refreshEnabledMemesCache } from './meme_manager.mjs';
 
 /** @type {?HTMLCanvasElement} lazily created canvas used to measure meme popup text width */
 let memeTextMeasureCanvas = null;
@@ -143,6 +144,7 @@ export class LiveChatController {
 				s.load().then(() => {
 					this.updateScoreDisplay();
 				});
+				if ('memes' in changes) refreshEnabledMemesCache();
 			}
 		});
 	}
@@ -192,6 +194,7 @@ export class LiveChatController {
 		// Initialize and start meme injector
 		this.memeInjector = new MemeInjector(this.layer, this.layoutCache);
 		this.memeInjector.start();
+		refreshEnabledMemesCache();
 	}
 
 	/**
