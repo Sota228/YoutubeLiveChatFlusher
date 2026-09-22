@@ -7,31 +7,31 @@
 	},
 	{
 		"id": "preset_02",
-		"text": "あきらめんなよ",
+		"text": "諦めんなよ",
 		"audioFile": "assets/audio/あきらめんなよ.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_03",
-		"text": "え嘘だろ嘘だろ",
+		"text": "えっ嘘だろ嘘だろ",
 		"audioFile": "assets/audio/え嘘だろ嘘だろ.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_04",
-		"text": "お前の席ねぇから",
+		"text": "おめーの席ねぇから",
 		"audioFile": "assets/audio/お前の席ないから.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_05",
-		"text": "厳しいって",
+		"text": "きびしって",
 		"audioFile": "assets/audio/きびしって.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_06",
-		"text": "ぎこぎこはしません",
+		"text": "ギコギコはしません",
 		"audioFile": "assets/audio/ぎこぎこ.mp3",
 		"enabled": true
 	},
@@ -43,31 +43,31 @@
 	},
 	{
 		"id": "preset_08",
-		"text": "このはげー違うだろ",
+		"text": "「この、ハゲ～っ！」「ち～が～う～だ～ろ～！」",
 		"audioFile": "assets/audio/このはげ.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_09",
-		"text": "これはひどい",
+		"text": "これはひどい！！",
 		"audioFile": "assets/audio/これはひどい.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_10",
-		"text": "しこランド",
+		"text": "しこしこしこしこしこらんど",
 		"audioFile": "assets/audio/しこランド.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_11",
-		"text": "そんな装備で大丈夫か",
+		"text": "そんな装備で大丈夫か？",
 		"audioFile": "assets/audio/そんな装備で大丈夫か.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_12",
-		"text": "でんじろう先生",
+		"text": "じゃいきまーす",
 		"audioFile": "assets/audio/でんじろう先生.mp3",
 		"enabled": true
 	},
@@ -79,13 +79,13 @@
 	},
 	{
 		"id": "preset_14",
-		"text": "離せっ！",
+		"text": "離せ☆！",
 		"audioFile": "assets/audio/はなせ.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_15",
-		"text": "ほんとかな？",
+		"text": "ほんとかな",
 		"audioFile": "assets/audio/ほんとかな.mp3",
 		"enabled": true
 	},
@@ -115,19 +115,19 @@
 	},
 	{
 		"id": "preset_20",
-		"text": "何をする",
+		"text": "何をするっ！？",
 		"audioFile": "assets/audio/何をする.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_21",
-		"text": "何を四天王？何を四天王！？ (1)",
+		"text": "何を四天王!?",
 		"audioFile": "assets/audio/何を四天王？何を四天王！？ (1).mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_22",
-		"text": "出ないんですね",
+		"text": "出ない！出ないんですねぇ これが出ないんだなぁ～……出ないかー！",
 		"audioFile": "assets/audio/出ないんですね.mp3",
 		"enabled": true
 	},
@@ -145,13 +145,13 @@
 	},
 	{
 		"id": "preset_25",
-		"text": "幸せならOKです",
+		"text": "でも、幸せならOKです",
 		"audioFile": "assets/audio/幸せならOKです.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_26",
-		"text": "引っ越し引っ越し",
+		"text": "引っ越しおばさん",
 		"audioFile": "assets/audio/騒音おばさん.mp3",
 		"enabled": true
 	},
@@ -169,13 +169,13 @@
 	},
 	{
 		"id": "preset_29",
-		"text": "水素の音",
+		"text": "あぁ～！水素の音ォ〜！！",
 		"audioFile": "assets/audio/水素の音.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_30",
-		"text": "21歳",
+		"text": "男性「２１歳」",
 		"audioFile": "assets/audio/男性「21歳」.mp3",
 		"enabled": true
 	},
@@ -193,13 +193,13 @@
 	},
 	{
 		"id": "preset_33",
-		"text": "粉ばなな",
+		"text": "粉バナナ☆",
 		"audioFile": "assets/audio/粉ばなな.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_34",
-		"text": "許せんなぁ...許せんなぁ...！ (1)",
+		"text": "許せんなぁ！？許せんなぁ！？",
 		"audioFile": "assets/audio/許せんなぁ...許せんなぁ...！ (1).mp3",
 		"enabled": true
 	},
@@ -211,7 +211,7 @@
 	},
 	{
 		"id": "preset_36",
-		"text": "ここ",
+		"text": "こ↑こ↓",
 		"audioFile": "assets/audio/野獣「こ↑こ↓」.mp3",
 		"enabled": true
 	},
@@ -223,7 +223,7 @@
 	},
 	{
 		"id": "preset_38",
-		"text": "やりますねえ",
+		"text": "やりますねぇ",
 		"audioFile": "assets/audio/野獣「やりますねえ」 (1).mp3",
 		"enabled": true
 	},
