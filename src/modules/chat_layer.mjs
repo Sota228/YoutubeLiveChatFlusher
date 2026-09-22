@@ -27,6 +27,10 @@ export class LiveChatLayer {
 	 */
 	limit = 0;
 
+	get controller() {
+		return this.#controller;
+	}
+
 	/**
 	 * Creates new layer.
 	 * @param {import("./chat_controller.mjs").LiveChatController} controller controller
@@ -66,7 +70,15 @@ export class LiveChatLayer {
 		this.scoreElement.id = 'yt-lcf-score';
 		this.memePopupElement = document.createElement('div');
 		this.memePopupElement.id = 'yt-lcf-meme-popup';
-		this.root.append(link, ...styles, this.scoreElement, this.memePopupElement);
+		this.timerElement = document.createElement('div');
+		this.timerElement.id = 'yt-lcf-timer';
+		this.darkOverlayElement = document.createElement('div');
+		this.darkOverlayElement.id = 'yt-lcf-dark-overlay';
+		this.darkOverlayElement.hidden = true;
+		this.resultModalElement = document.createElement('div');
+		this.resultModalElement.id = 'yt-lcf-result-modal';
+		this.resultModalElement.hidden = true;
+		this.root.append(link, ...styles, this.scoreElement, this.memePopupElement, this.timerElement, this.darkOverlayElement, this.resultModalElement);
 		this.#initialElemCount = this.root.childElementCount;
 
 		const mutationObserver = new MutationObserver(() => {
@@ -89,9 +101,82 @@ export class LiveChatLayer {
 	 * @returns {LiveChatLayer} layer
 	 */
 	clear() {
-		const preserved = this.root.querySelectorAll('link,style,#yt-lcf-score,#yt-lcf-meme-popup');
+		const preserved = this.root.querySelectorAll('link,style,#yt-lcf-score,#yt-lcf-meme-popup,#yt-lcf-timer,#yt-lcf-dark-overlay,#yt-lcf-result-modal');
 		this.root.replaceChildren(...preserved);
 		return this;
+	}
+
+	/**
+	 * Displays the result modal overlay.
+	 * @param {{ score: number, spawned: number, clicked: number }} stats
+	 * @param {Function} onRestart callback when user clicks restart button
+	 */
+	showResultModal(stats, onRestart) {
+		this.element.classList.add('timeup');
+		this.darkOverlayElement.hidden = false;
+
+		const accuracy = stats.spawned > 0 ? Math.round((stats.clicked / stats.spawned) * 100) : 0;
+
+		this.resultModalElement.replaceChildren();
+
+		const title = document.createElement('h2');
+		title.className = 'result-title';
+		title.textContent = '⏱️ TIME UP!';
+
+		const statsContainer = document.createElement('div');
+		statsContainer.className = 'result-stats';
+
+		const scoreItem = document.createElement('div');
+		scoreItem.className = 'stat-item score-item';
+		scoreItem.innerHTML = `<span class="stat-label">SCORE</span><span class="stat-value">${stats.score}</span>`;
+
+		const spawnedItem = document.createElement('div');
+		spawnedItem.className = 'stat-item';
+		spawnedItem.innerHTML = `<span class="stat-label">流れてきたミーム</span><span class="stat-value">${stats.spawned} 個</span>`;
+
+		const clickedItem = document.createElement('div');
+		clickedItem.className = 'stat-item';
+		clickedItem.innerHTML = `<span class="stat-label">クリックできた数</span><span class="stat-value">${stats.clicked} 個</span>`;
+
+		const accuracyItem = document.createElement('div');
+		accuracyItem.className = 'stat-item';
+		accuracyItem.innerHTML = `<span class="stat-label">ヒット率</span><span class="stat-value">${accuracy}%</span>`;
+
+		statsContainer.append(scoreItem, spawnedItem, clickedItem, accuracyItem);
+
+		const btnGroup = document.createElement('div');
+		btnGroup.className = 'result-btn-group';
+
+		const restartBtn = document.createElement('button');
+		restartBtn.id = 'yt-lcf-btn-restart';
+		restartBtn.className = 'result-btn result-btn-restart';
+		restartBtn.textContent = '🔄 もう一回始める';
+		restartBtn.addEventListener('click', () => {
+			onRestart();
+		});
+
+		const titleBtn = document.createElement('button');
+		titleBtn.id = 'yt-lcf-btn-title';
+		titleBtn.className = 'result-btn result-btn-title';
+		titleBtn.textContent = '🏠 タイトル画面へ';
+		titleBtn.addEventListener('click', () => {
+			if (onTitle) onTitle();
+			else window.open(browser.runtime.getURL('home.html'), '_blank');
+		});
+
+		btnGroup.append(restartBtn, titleBtn);
+
+		this.resultModalElement.append(title, statsContainer, btnGroup);
+		this.resultModalElement.hidden = false;
+	}
+
+	/**
+	 * Hides the result modal and overlay.
+	 */
+	hideResultModal() {
+		this.element.classList.remove('timeup');
+		this.darkOverlayElement.hidden = true;
+		this.resultModalElement.hidden = true;
 	}
 
 	/**

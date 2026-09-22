@@ -42,6 +42,9 @@ export const DEFAULT_CONFIG = Object.freeze({
 		message_pause: 1,
 		score_enabled: 1,
 		score_position: 'top-right',
+		timer_enabled: 0,
+		timer_duration: 60,
+		timer_position: 'top-right',
 	},
 	parts: {
 		normal: { photo: false, name: false, message: true, color: '', strokeColor: '' },

@@ -57,12 +57,10 @@ browser.action.onClicked.addListener(() => {
 });
 
 browser.tabs.onActivated.addListener(async ({ tabId }) => {
-	const tab = await browser.tabs.get(tabId);
-	await browser.action[tab.url ? 'enable' : 'disable'](tabId);
+	await browser.action.enable(tabId);
 });
-browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-	if (changeInfo.status !== 'complete') return;
-	await browser.action[tab.active && tab.url ? 'enable' : 'disable'](tabId);
+browser.tabs.onUpdated.addListener(async (tabId) => {
+	await browser.action.enable(tabId);
 });
 
 browser.runtime.onInstalled.addListener(async ({ reason, previousVersion }) => {
