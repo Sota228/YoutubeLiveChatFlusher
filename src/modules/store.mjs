@@ -179,7 +179,9 @@ class ConfigStore {
 	 */
 	async load(json = undefined) {
 		/** @type {Partial<UnwrapReadonly<typeof this.data>>} */
-		const stored = json ?? await browser.storage.local.get(null);
+		// Only load public configuration sections. Secrets stored under separate
+		// top-level keys (for example gemini_api_key) must stay out of content scripts.
+		const stored = json ?? await browser.storage.local.get(Object.keys(this.data));
 		this.migrate(stored);
 		Object.assign(this.data.styles, stored.styles);
 		Object.assign(this.data.others, stored.others);

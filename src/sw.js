@@ -3,6 +3,7 @@ import { store } from './modules/store.mjs';
 
 import { LanguageDetectionController, TranslatorController } from './modules/translator.mjs';
 import { MLEngineManager } from './modules/ml_engine.mjs';
+import { selectMemeWithAI } from './modules/meme_ai.mjs';
 
 // @ts-expect-error
 self.browser ??= chrome;
@@ -157,6 +158,15 @@ browser.runtime.onMessage.addListener(/** @type {YTLCFMessage.Callback} */ (msg,
 			respond([ { label: null, score: null, mask } ]);
 		})
 		.finally(() => performanceLogger.write(performance.now() - startTime));
+	} else if ('memeSelection' in msg) {
+		const { recentChats, memes } = msg.memeSelection;
+		browser.storage.local.get('gemini_api_key')
+		.then(({ gemini_api_key: apiKey }) => selectMemeWithAI(recentChats, memes, apiKey || ''))
+		.then(selectedId => respond({ selectedId }))
+		.catch(err => {
+			logger.warn('Failed to select a meme with Gemini:', err);
+			respond({ selectedId: null });
+		});
 	} else if ('fire' in msg) {
 		events[msg.fire]().then(respond);
 	} else if ('request' in msg) {

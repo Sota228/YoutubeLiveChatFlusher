@@ -286,6 +286,33 @@ addMemeBtn?.addEventListener('click', async () => {
 	}
 });
 
+// --- Gemini API Key ---
+const geminiKeyInput = /** @type {HTMLInputElement|null} */ (document.getElementById('gemini_api_key'));
+const geminiKeyStatus = document.getElementById('gemini-key-status');
+const btnSaveGeminiKey = document.getElementById('btn-save-gemini-key');
+const btnToggleApiKey = document.getElementById('btn-toggle-apikey');
+
+// Load saved key on page load
+(async () => {
+	const { gemini_api_key: apiKey = '' } = await browser.storage.local.get('gemini_api_key');
+	if (geminiKeyInput) geminiKeyInput.value = apiKey;
+})();
+
+btnToggleApiKey?.addEventListener('click', () => {
+	if (!geminiKeyInput) return;
+	geminiKeyInput.type = geminiKeyInput.type === 'password' ? 'text' : 'password';
+});
+
+btnSaveGeminiKey?.addEventListener('click', async () => {
+	const key = geminiKeyInput?.value?.trim() ?? '';
+	await browser.storage.local.set({ gemini_api_key: key });
+	if (geminiKeyStatus) {
+		geminiKeyStatus.textContent = key ? '✅ 保存しました' : '🗑 キーを削除しました';
+		geminiKeyStatus.style.color = key ? 'green' : 'gray';
+		setTimeout(() => { if (geminiKeyStatus) geminiKeyStatus.textContent = ''; }, 3000);
+	}
+});
+
 const status = document.getElementById('status');
 form.addEventListener('change', async e => {
 	if (/** @type {HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement} */ (e.target).form !== form) return;

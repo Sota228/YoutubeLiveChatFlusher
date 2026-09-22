@@ -7,6 +7,7 @@ declare module "webextension-polyfill" {
 			sendMessage(message: YTLCFMessage.Request.LanguageDetection): Promise<YTLCFMessage.Response.LanguageDetection>;
 			sendMessage(message: YTLCFMessage.Request.Translation): Promise<YTLCFMessage.Response.Translation>;
 			sendMessage(message: YTLCFMessage.Request.PersonDetection): Promise<YTLCFMessage.Response.PersonDetection>;
+			sendMessage(message: YTLCFMessage.Request.MemeSelection): Promise<YTLCFMessage.Response.MemeSelection>;
 			sendMessage(message: YTLCFMessage.Request.EventFire): Promise<YTLCFMessage.Response.EventFire>;
 			sendMessage(message: YTLCFMessage.Request.BackgroundFetch<"arrayBuffer">): Promise<YTLCFMessage.Response.BackgroundFetch<ArrayBuffer> | YTLCFMessage.Response.Error>;
 			sendMessage(message: YTLCFMessage.Request.BackgroundFetch<"blob">): Promise<YTLCFMessage.Response.BackgroundFetch<Blob> | YTLCFMessage.Response.Error>;
@@ -20,7 +21,7 @@ declare module "webextension-polyfill" {
 
 namespace YTLCFMessage {
 	namespace Request {
-		type Any = LanguageDetection | Translation | PersonDetection | EventFire | BackgroundFetch<AcceptableFetchType>;
+		type Any = LanguageDetection | Translation | PersonDetection | MemeSelection | EventFire | BackgroundFetch<AcceptableFetchType>;
 		type AcceptableFetchType = "arrayBuffer" | "blob" | "bytes" | "json" | "text";
 
 		type LanguageDetection = {
@@ -39,6 +40,12 @@ namespace YTLCFMessage {
 			mask: Blob
 			width?: number;
 			height?: number;
+		};
+		type MemeSelection = {
+			memeSelection: {
+				recentChats: string[];
+				memes: Array<{ id: string; text: string }>;
+			};
 		};
 		type EventFire = {
 			fire: "reload" | "reloadTabs" | "openOptions";
@@ -62,6 +69,9 @@ namespace YTLCFMessage {
 			src: string;
 		};
 		type PersonDetection = SegmentationResult[];
+		type MemeSelection = {
+			selectedId: string | null;
+		};
 		type BackgroundFetch<T> = {
 			data: T;
 		};
