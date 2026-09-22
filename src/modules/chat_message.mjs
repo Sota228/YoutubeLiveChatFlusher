@@ -106,12 +106,28 @@ export class LiveChatItemFactory {
 	/** @type {Map<string, HTMLElement>} */
 	#templates = new Map();
 
+	/**
+	 * Loads message templates, retrying a few times since a transient fetch failure
+	 * (e.g. right after the extension is reloaded) would otherwise permanently break
+	 * rendering of normal chat messages for the rest of the page's session.
+	 */
 	async load() {
-		const doc = await loadTemplateDocument('../templates/template_chat_message.html');
-		const elems = doc.getElementsByTagName('template');
-		for (const t of elems) {
-			const el = t.content.firstElementChild;
-			if (el) this.#templates.set(t.id, /** @type {HTMLElement} */ (el));
+		const MAX_ATTEMPTS = 3;
+		for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+			try {
+				const doc = await loadTemplateDocument('../templates/template_chat_message.html');
+				const elems = doc.getElementsByTagName('template');
+				for (const t of elems) {
+					const el = t.content.firstElementChild;
+					if (el) this.#templates.set(t.id, /** @type {HTMLElement} */ (el));
+				}
+				if (this.#templates.size === 0) throw new Error('No message templates were parsed.');
+				return;
+			} catch (err) {
+				logger.error(`Failed to load chat message templates (attempt ${attempt}/${MAX_ATTEMPTS}).\nCaused by:`, err);
+				if (attempt === MAX_ATTEMPTS) throw err;
+				await new Promise(resolve => setTimeout(resolve, attempt * 500));
+			}
 		}
 	}
 

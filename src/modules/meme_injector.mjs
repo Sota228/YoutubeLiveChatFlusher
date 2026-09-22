@@ -1,11 +1,15 @@
 /**
  * @module meme_injector
  * @description Injects meme comments into the danmaku layer at random intervals.
+ *              Uses Gemini API (if API key is configured) to pick the best meme
+ *              based on recent live chat content. Falls back to Math.random().
+ *              Automatically pauses injection while YouTube ads are playing.
  */
 
 import { getEnabledMemes } from './meme_manager.mjs';
 import { layoutChatItem } from './chat_layout.mjs';
 import { store as s } from './store.mjs';
+import { isAdShowing } from './utils.mjs';
 
 /**
  * Creates a meme comment element.
@@ -38,9 +42,26 @@ function createMemeElement(meme) {
 	return el;
 }
 
+/**
+ * Picks a batch size from 1..max, weighted so smaller counts (especially 1) are far more likely
+ * (weight for size k is 2^(max-k), so 1 is always the most likely outcome).
+ * @param {number} max maximum batch size (inclusive)
+ * @returns {number}
+ */
+function pickWeightedBatchSize(max) {
+	const weights = Array.from({ length: max }, (_, i) => 2 ** (max - 1 - i));
+	const total = weights.reduce((a, b) => a + b, 0);
+	let r = Math.random() * total;
+	for (let k = 0; k < max; k++) {
+		r -= weights[k];
+		if (r < 0) return k + 1;
+	}
+	return max;
+}
+
 export class MemeInjector {
 	/** @type {number} */
-	#intervalId = 0;
+	#timerId = 0;
 
 	/** @type {import('./chat_layer.mjs').LiveChatLayer} */
 	#layer;
@@ -48,25 +69,50 @@ export class MemeInjector {
 	/** @type {import('./chat_layout.mjs').LiveChatLayoutCache} */
 	#layoutCache;
 
-	/** @type {number} interval in ms between meme injections */
-	#intervalMs;
-
 	/** @type {import('./meme_manager.mjs').MemeEntry[]} cached enabled memes */
 	#memes = [];
 
 	/**
+	 * Ring buffer of recent chat texts (newest first, max 20 entries).
+	 * @type {string[]}
+	 */
+	#recentChatTexts = [];
+
+	/** @type {boolean} whether the injector loop is running */
+	#running = false;
+
+	/**
+	 * The YouTube player element used for ad detection.
+	 * @type {HTMLElement | null}
+	 */
+	#player = null;
+
+	/**
 	 * @param {import('./chat_layer.mjs').LiveChatLayer} layer danmaku layer
 	 * @param {import('./chat_layout.mjs').LiveChatLayoutCache} layoutCache layout cache
-	 * @param {number} [intervalMs=8000] interval between meme injections in ms
+	 * @param {HTMLElement | null} [player] YouTube player element for ad detection
 	 */
-	constructor(layer, layoutCache, intervalMs = 8000) {
+	constructor(layer, layoutCache, player = null) {
 		this.#layer = layer;
 		this.#layoutCache = layoutCache;
-		this.#intervalMs = intervalMs;
+		this.#player = player;
 	}
 
 	/**
-	 * Starts injecting memes at regular intervals.
+	 * Adds a chat text to the recent chat ring buffer.
+	 * Call this from the controller whenever a new chat message is rendered.
+	 * @param {string} text raw chat message text
+	 */
+	addChatText(text) {
+		if (!text?.trim()) return;
+		this.#recentChatTexts.unshift(text.trim());
+		if (this.#recentChatTexts.length > 20) {
+			this.#recentChatTexts.length = 20;
+		}
+	}
+
+	/**
+	 * Starts injecting memes at randomized intervals.
 	 */
 	async start() {
 		this.stop();
@@ -74,18 +120,18 @@ export class MemeInjector {
 
 		if (this.#memes.length === 0) return;
 
-		this.#intervalId = setInterval(() => {
-			this.#injectRandomMeme();
-		}, this.#intervalMs);
+		this.#running = true;
+		this.#scheduleNext();
 	}
 
 	/**
 	 * Stops meme injection.
 	 */
 	stop() {
-		if (this.#intervalId) {
-			clearInterval(this.#intervalId);
-			this.#intervalId = 0;
+		this.#running = false;
+		if (this.#timerId) {
+			clearTimeout(this.#timerId);
+			this.#timerId = 0;
 		}
 	}
 
@@ -97,72 +143,104 @@ export class MemeInjector {
 	}
 
 	/**
-	 * Injects a random meme into the layer.
+	 * Schedules the next injection after a randomized delay, re-drawing the delay each time.
 	 */
-	#injectRandomMeme() {
+	#scheduleNext() {
+		if (!this.#running) return;
+		const min = Math.max(0, s.others.meme_interval_min ?? 3) * 1000;
+		const max = Math.max(min, (s.others.meme_interval_max ?? 15) * 1000);
+		const delay = min + Math.random() * (max - min);
+		this.#timerId = setTimeout(async () => {
+			this.#timerId = 0;
+			await this.#injectBatch();
+			this.#scheduleNext();
+		}, delay);
+	}
+
+	/**
+	 * Injects a randomly-sized batch of memes (weighted toward smaller counts).
+	 */
+	async #injectBatch() {
 		if (this.#memes.length === 0) return;
 		if (this.#layer.element.hidden) return;
+		if (this.#player && isAdShowing(this.#player)) {
+			console.info('[MEME] Ad detected — skipping meme injection.');
+			return;
+		}
 
-		const meme = this.#memes[Math.floor(Math.random() * this.#memes.length)];
+		const maxBatch = Math.max(1, s.others.meme_batch_max ?? 3);
+		const count = pickWeightedBatchSize(maxBatch);
+		for (let i = 0; i < count; i++) {
+			// Use at most one Gemini request per batch. Additional items stay random.
+			const meme = i === 0 ? await this.#selectMeme() : this.#randomMeme();
+			if (meme) this.#injectMeme(meme);
+		}
+	}
+
+	/**
+	 * Injects a single meme into the layer.
+	 * @param {import('./meme_manager.mjs').MemeEntry} meme meme data
+	 */
+	#injectMeme(meme) {
 		const el = createMemeElement(meme);
 
 		/** @type {["dense", "random"]} */
 		const modeOptions = ['dense', 'random'];
 		layoutChatItem(el, this.#layoutCache, modeOptions[s.others.density]);
 
-		if (this.#layer.controller && typeof this.#layer.controller.spawnedMemeCount === 'number') {
-			this.#layer.controller.spawnedMemeCount++;
+		if (this.#layer.controller && typeof this.#layer.controller.recordSpawnedMeme === 'function') {
+			this.#layer.controller.recordSpawnedMeme(el);
 		}
 	}
 
 	/**
-	 * Sets the injection interval.
-	 * @param {number} ms interval in milliseconds
+	 * Selects a meme via Gemini AI if an API key is configured and enough chat
+	 * context has been gathered; otherwise falls back to Math.random().
+	 * @returns {Promise<import('./meme_manager.mjs').MemeEntry | null>}
 	 */
-	setInterval(ms) {
-		this.#intervalMs = ms;
-		if (this.#intervalId) {
-			this.start(); // restart with new interval
+	async #selectMeme() {
+		if (this.#recentChatTexts.length >= 3) {
+			try {
+				const response = await browser.runtime.sendMessage({
+					memeSelection: {
+						recentChats: this.#recentChatTexts,
+						memes: this.#memes.map(({ id, text }) => ({ id, text })),
+					},
+				});
+				const selectedId = response?.selectedId;
+				if (selectedId) {
+					return this.#memes.find(m => m.id === selectedId) ?? this.#randomMeme();
+				}
+			} catch (err) {
+				console.warn('[MEME-AI] selectMemeWithAI error, falling back to random:', err);
+			}
 		}
+
+		return this.#randomMeme();
 	}
 
 	/**
-	 * Plays the audio associated with a meme element.
-	 * @param {HTMLElement} memeElement the meme element that was clicked
-	 * @param {HTMLVideoElement|null} videoElement the main video element to duck volume
+	 * Returns a uniformly random meme from the cache.
+	 * @returns {import('./meme_manager.mjs').MemeEntry}
+	 */
+	#randomMeme() {
+		return this.#memes[Math.floor(Math.random() * this.#memes.length)];
+	}
+
+	/**
+	 * Plays the audio associated with a meme element. Multiple calls can overlap; video volume
+	 * ducking (if desired) is the caller's responsibility so overlapping plays don't fight over it.
+	 * @param {HTMLElement} memeElement the meme element that was clicked or missed
 	 * @returns {?HTMLAudioElement} the created audio element, or null if the meme has no audio
 	 */
-	static playAudio(memeElement, videoElement) {
+	static playAudio(memeElement) {
 		const audioUrl = memeElement.dataset.audioUrl;
 		if (!audioUrl) return null;
 
 		const audio = new Audio(audioUrl);
 		audio.volume = 1.0; // Play meme loudly
-
-		let originalVolume = 1.0;
-		if (videoElement) {
-			originalVolume = videoElement.volume;
-			// Lower the video volume to 20% of its original volume
-			videoElement.volume = originalVolume * 0.2;
-		}
-
-		audio.onended = () => {
-			if (videoElement) {
-				videoElement.volume = originalVolume;
-			}
-		};
-		// Also restore volume if there's an error or it gets paused somehow
-		audio.onpause = audio.onerror = () => {
-			if (videoElement && videoElement.volume < originalVolume) {
-				videoElement.volume = originalVolume;
-			}
-		};
-
 		audio.play().catch(err => {
 			console.warn('Failed to play meme audio:', err);
-			if (videoElement) {
-				videoElement.volume = originalVolume;
-			}
 		});
 
 		return audio;

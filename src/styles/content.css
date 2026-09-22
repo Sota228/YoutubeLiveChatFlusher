@@ -92,6 +92,9 @@
 	width: 100%;
 	z-index: 12;
 }
+#yt-lcf-layer.block-player-interactions {
+	pointer-events: auto;
+}
 .html5-video-player.unstarted-mode > #yt-lcf-layer,
 .html5-video-player.ended-mode > #yt-lcf-layer {
 	z-index: 25;

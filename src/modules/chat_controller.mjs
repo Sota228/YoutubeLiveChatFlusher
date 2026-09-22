@@ -18,9 +18,19 @@ const MEME_POPUP_REFERENCE_SIZE = 100;
 const MEME_POPUP_LINE_HEIGHT = 1.1;
 /** How long (ms) the meme popup stays visible, independent of the audio's own duration. */
 const MEME_POPUP_DISPLAY_MS = 2500;
+/** Must match the `.meme-popup` opacity/transform transition duration in layer.css. */
+const MEME_POPUP_FADE_MS = 300;
+/** Max number of meme popups shown at once; the oldest is evicted immediately beyond this. */
+const MEME_POPUP_MAX_SIMULTANEOUS = 5;
+/** How far (as a % of the video width/height) extra popups can scatter from dead-center. */
+const MEME_POPUP_OFFSET_PERCENT = 40;
+/** Max lines long text is allowed to wrap onto, instead of always shrinking to fit one line. */
+const MEME_POPUP_MAX_LINES = 4;
 
 /**
  * Computes a font size (in px) so that `text` fills close to `maxWidth`, capped by `maxHeight`.
+ * Longer text is allowed to wrap onto multiple lines (up to {@link MEME_POPUP_MAX_LINES}) rather
+ * than always being shrunk down to fit on a single line.
  * @param {string} text
  * @param {number} maxWidth
  * @param {number} maxHeight
@@ -31,9 +41,14 @@ function fitMemePopupFontSize(text, maxWidth, maxHeight) {
 	const ctx = memeTextMeasureCanvas.getContext('2d');
 	ctx.font = `${MEME_POPUP_FONT_WEIGHT} ${MEME_POPUP_REFERENCE_SIZE}px sans-serif`;
 	const measuredWidth = ctx.measureText(text).width || MEME_POPUP_REFERENCE_SIZE;
-	const byWidth = MEME_POPUP_REFERENCE_SIZE * (maxWidth / measuredWidth);
-	const byHeight = maxHeight / MEME_POPUP_LINE_HEIGHT;
-	return Math.max(16, Math.min(byWidth, byHeight));
+
+	let best = 16;
+	for (let lines = 1; lines <= MEME_POPUP_MAX_LINES; lines++) {
+		const byWidth = MEME_POPUP_REFERENCE_SIZE * (maxWidth * lines / measuredWidth);
+		const byHeight = maxHeight / (lines * MEME_POPUP_LINE_HEIGHT);
+		best = Math.max(best, Math.min(byWidth, byHeight));
+	}
+	return best;
 }
 
 export const SimultaneousModeEnum = Object.freeze({
@@ -49,10 +64,12 @@ export class LiveChatController {
 	#skip = false;
 	/** @type {MutationObserver} */
 	#layerSizeObserver;
-	/** @type {?HTMLAudioElement} currently playing meme audio, so a new click can cancel it */
-	#activeMemeAudio = null;
-	/** @type {number} timer id that hides the meme popup */
-	#memePopupHideTimer = 0;
+	/** @type {{ el: HTMLElement, audio: ?HTMLAudioElement, hideTimer: number, removeTimer: number }[]} */
+	#activeMemePopups = [];
+	/** @type {number} how many meme audios are currently ducking the video volume */
+	#activeMemeAudioCount = 0;
+	/** @type {?number} video volume before the first concurrent meme audio ducked it */
+	#videoOriginalVolume = null;
 
 	/** @type {"desktop" | "mobile"} */ device;
 	/** @type {HTMLElement} */ player;
@@ -79,6 +96,8 @@ export class LiveChatController {
 	spawnedMemeCount = 0;
 	/** @type {number} */
 	clickedMemeCount = 0;
+	/** @type {Map<string, { text: string, caught: boolean }>} */
+	memeResults = new Map();
 	/** @type {boolean} */
 	isTimeUp = false;
 	/** @type {?HTMLAudioElement} */
@@ -95,6 +114,14 @@ export class LiveChatController {
 		const root = this.layer.root;
 		this.layoutCache = new LiveChatLayoutCache(root);
 		this.itemFactory = new LiveChatItemFactory();
+		this.#updatePlayerInteractionLock();
+		for (const eventName of ['click', 'dblclick']) {
+			this.layer.element.addEventListener(eventName, e => {
+				if (this.isTimeUp || !(s.others.block_player_interactions ?? 1)) return;
+				e.preventDefault();
+				e.stopImmediatePropagation();
+			}, { passive: false });
+		}
 
 		root.addEventListener('contextmenu', e => {
 			/** @type {?HTMLElement | undefined} */
@@ -123,22 +150,40 @@ export class LiveChatController {
 				if (!memeEl.dataset.scored) {
 					memeEl.dataset.scored = 'true';
 					this.clickedMemeCount++;
+					const result = this.memeResults.get(memeEl.id);
+					if (result) result.caught = true;
 					this.addScore(100);
+					if (s.others.timer_enabled ?? 0) {
+						const maxTime = s.others.timer_duration ?? 60;
+						this.remainingTime = Math.min(this.remainingTime + 5, maxTime);
+						this.updateTimerDisplay();
+					}
 				}
-				this.#showMemePopup(memeEl);
+				this.#showMemePopup(memeEl, true);
 				return;
 			}
 			const interactiveTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
 			if (interactiveTags.includes(origin?.tagName || 'BODY')) {
 				e.stopPropagation();
-			} else {
-				origin?.parentElement?.click();
+				return;
 			}
+			// Non-meme text comment: apply the miss-click penalty (checked once per real click).
+			const textEl = /** @type {?HTMLElement} */ (origin?.closest?.('.text'));
+			if (textEl) {
+				e.stopPropagation();
+				this.#applyPenalty();
+				return;
+			}
+			origin?.parentElement?.click();
 		}, { passive: true });
 		root.addEventListener('animationend', e => {
 			const elem = /** @type {HTMLElement} */ (e.target);
 			// Skip persistent overlay elements; only recycle finished flush-scroll chat messages.
 			if (elem.id.startsWith('yt-lcf-')) return;
+			if (!this.isTimeUp && elem.classList.contains('meme') && !elem.classList.contains('played') && (s.others.meme_miss_penalty_enabled ?? 1)) {
+				this.#showMemePopup(elem, false);
+				this.#applyPenalty();
+			}
 			if (elem.parentNode === root) {
 				this.layoutCache.delete(elem.id);
 				elem.remove();
@@ -157,6 +202,7 @@ export class LiveChatController {
 			if (area === 'local') {
 				s.load().then(() => {
 					this.updateScoreDisplay();
+					this.#updatePlayerInteractionLock();
 					if (changes.timer_enabled || changes.timer_duration) {
 						this.startTimer();
 					}
@@ -164,6 +210,14 @@ export class LiveChatController {
 				if ('memes' in changes) refreshEnabledMemesCache();
 			}
 		});
+	}
+
+	/** Makes the layer receive blank-area clicks only while player interaction blocking is enabled. */
+	#updatePlayerInteractionLock() {
+		this.layer.element.classList.toggle(
+			'block-player-interactions',
+			Boolean(s.others.block_player_interactions ?? 1),
+		);
 	}
 
 	async start() {
@@ -212,40 +266,162 @@ export class LiveChatController {
 		this.startTimer();
 
 		// Initialize and start meme injector
-		this.memeInjector = new MemeInjector(this.layer, this.layoutCache);
+		this.memeInjector = new MemeInjector(this.layer, this.layoutCache, this.player);
 		this.memeInjector.start();
 		refreshEnabledMemesCache();
 	}
 
 	/**
-	 * Shows the clicked meme's text at the center of the video and plays its audio.
-	 * Only the most recent click is shown; any previous popup/audio is cancelled immediately.
-	 * @param {HTMLElement} memeEl the meme element that was clicked
+	 * Records a meme when it is injected so its final caught/missed state survives DOM removal.
+	 * @param {HTMLElement} memeEl injected meme element
 	 */
-	#showMemePopup(memeEl) {
-		this.#activeMemeAudio?.pause();
-		this.#activeMemeAudio = null;
-		clearTimeout(this.#memePopupHideTimer);
+	recordSpawnedMeme(memeEl) {
+		this.spawnedMemeCount++;
+		this.memeResults.set(memeEl.id, {
+			text: memeEl.dataset.text || '',
+			caught: false,
+		});
+	}
 
-		const popup = this.layer.memePopupElement;
+	/**
+	 * Groups meme results by phrase for display in the result screen.
+	 * @param {boolean} caught whether to return caught or missed memes
+	 * @returns {{ text: string, count: number }[]}
+	 */
+	#summarizeMemeResults(caught) {
+		/** @type {Map<string, number>} */
+		const counts = new Map();
+		for (const result of this.memeResults.values()) {
+			if (result.caught !== caught) continue;
+			counts.set(result.text, (counts.get(result.text) || 0) + 1);
+		}
+		return [...counts].map(([text, count]) => ({ text, count }));
+	}
+
+	/**
+	 * Shows a meme's text over the video and plays its audio. The first popup on screen is
+	 * dead-centered; if others are already showing, this one scatters randomly around center
+	 * instead of replacing them, so several can be visible (and audible) at once.
+	 * @param {HTMLElement} memeEl the meme element that was clicked or missed
+	 * @param {boolean} caught whether the meme was clicked (green) rather than missed (red)
+	 */
+	#showMemePopup(memeEl, caught) {
+		while (this.#activeMemePopups.length >= MEME_POPUP_MAX_SIMULTANEOUS) {
+			this.#removeMemePopup(this.#activeMemePopups[0]);
+		}
+
 		const text = memeEl.dataset.text || '';
 		const rect = this.layer.element.getBoundingClientRect();
+
+		const popup = document.createElement('div');
+		popup.id = `yt-lcf-meme-popup-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+		popup.className = 'meme-popup';
 		popup.textContent = text;
-		popup.style.fontSize = `${fitMemePopupFontSize(text, rect.width * 0.92, rect.height * 0.4)}px`;
-		popup.classList.remove('show');
-		void popup.offsetWidth; // restart the pop-in animation
+		popup.classList.toggle('caught', caught);
+		popup.style.fontSize = `${fitMemePopupFontSize(text, rect.width * 0.8, rect.height * 0.34)}px`;
+
+		if (this.#activeMemePopups.length > 0) {
+			const offsetX = (Math.random() * 2 - 1) * MEME_POPUP_OFFSET_PERCENT;
+			const offsetY = (Math.random() * 2 - 1) * MEME_POPUP_OFFSET_PERCENT;
+			popup.style.left = `calc(50% + ${offsetX}%)`;
+			popup.style.top = `calc(50% + ${offsetY}%)`;
+		}
+
+		this.layer.root.appendChild(popup);
+		void popup.offsetWidth; // ensure the pop-in animation runs
 		popup.classList.add('show');
 
-		this.#memePopupHideTimer = setTimeout(() => {
+		/** @type {{ el: HTMLElement, audio: ?HTMLAudioElement, hideTimer: number, removeTimer: number }} */
+		const entry = { el: popup, audio: null, hideTimer: 0, removeTimer: 0 };
+		this.#activeMemePopups.push(entry);
+
+		entry.hideTimer = setTimeout(() => {
 			popup.classList.remove('show');
+			entry.removeTimer = setTimeout(() => this.#removeMemePopup(entry), MEME_POPUP_FADE_MS);
 		}, MEME_POPUP_DISPLAY_MS);
 
 		try {
 			const videoElement = this.player.querySelector('video');
-			this.#activeMemeAudio = MemeInjector.playAudio(memeEl, videoElement);
+			entry.audio = MemeInjector.playAudio(memeEl);
+			if (entry.audio) {
+				this.#duckVideoVolume(videoElement);
+				let restored = false;
+				const restoreOnce = () => {
+					if (restored) return;
+					restored = true;
+					this.#restoreVideoVolume(videoElement);
+				};
+				entry.audio.addEventListener('ended', restoreOnce, { once: true });
+				entry.audio.addEventListener('error', restoreOnce, { once: true });
+				entry.audio.addEventListener('pause', restoreOnce, { once: true });
+			}
 		} catch (err) {
 			logger.error('Failed to play meme audio.\nCaused by:', err);
 		}
+	}
+
+	/**
+	 * Stops and removes a tracked meme popup (audio, timers, and its DOM element).
+	 * @param {{ el: HTMLElement, audio: ?HTMLAudioElement, hideTimer: number, removeTimer: number }} entry
+	 */
+	#removeMemePopup(entry) {
+		const index = this.#activeMemePopups.indexOf(entry);
+		if (index === -1) return;
+		this.#activeMemePopups.splice(index, 1);
+		clearTimeout(entry.hideTimer);
+		clearTimeout(entry.removeTimer);
+		entry.audio?.pause();
+		entry.el.remove();
+	}
+
+	/**
+	 * Lowers the video volume once when the first concurrent meme audio starts.
+	 * @param {?HTMLVideoElement} videoElement
+	 */
+	#duckVideoVolume(videoElement) {
+		if (!videoElement) return;
+		if (this.#activeMemeAudioCount === 0) {
+			this.#videoOriginalVolume = videoElement.volume;
+			videoElement.volume = videoElement.volume * 0.2;
+		}
+		this.#activeMemeAudioCount++;
+	}
+
+	/**
+	 * Restores the video volume once the last concurrent meme audio finishes.
+	 * @param {?HTMLVideoElement} videoElement
+	 */
+	#restoreVideoVolume(videoElement) {
+		this.#activeMemeAudioCount = Math.max(0, this.#activeMemeAudioCount - 1);
+		if (this.#activeMemeAudioCount === 0 && videoElement && this.#videoOriginalVolume !== null) {
+			videoElement.volume = this.#videoOriginalVolume;
+			this.#videoOriginalVolume = null;
+		}
+	}
+
+	/**
+	 * Applies the miss-click penalty for clicking a non-meme comment: -150 score, and
+	 * (when the timer is enabled) -10 seconds on the countdown, clamped at 0.
+	 */
+	#applyPenalty() {
+		this.addScore(-150);
+		this.#flashPenalty();
+
+		if (!(s.others.timer_enabled ?? 0)) return;
+		this.remainingTime = Math.max(0, this.remainingTime - 10);
+		this.updateTimerDisplay();
+		if (this.remainingTime <= 0) {
+			this.stopTimer();
+			this.onTimeUp();
+		}
+	}
+
+	/** Briefly flashes the video area red to signal a penalty. */
+	#flashPenalty() {
+		const el = this.layer.penaltyFlashElement;
+		el.classList.remove('flash');
+		void el.offsetWidth; // restart the flash animation
+		el.classList.add('flash');
 	}
 
 	/**
@@ -287,7 +463,8 @@ export class LiveChatController {
 			{
 				score: this.score,
 				spawned: this.spawnedMemeCount,
-				clicked: this.clickedMemeCount,
+				clickedMemes: this.#summarizeMemeResults(true),
+				missedMemes: this.#summarizeMemeResults(false),
 			},
 			() => this.restartGame(),
 			() => this.returnToTitle()
@@ -327,9 +504,11 @@ export class LiveChatController {
 		this.isTimeUp = false;
 		this.spawnedMemeCount = 0;
 		this.clickedMemeCount = 0;
+		this.memeResults.clear();
 		this.score = 0;
 		await browser.storage.local.set({ meme_score: 0 });
 
+		for (const entry of [...this.#activeMemePopups]) this.#removeMemePopup(entry);
 		this.layer.hideResultModal();
 		this.layer.clear();
 
@@ -1018,6 +1197,12 @@ export class LiveChatController {
 				/** @type { ["dense", "random"] } */
 				const modeOptions = ['dense', 'random'];
 				layoutChatItem(el, this.layoutCache, modeOptions[s.others.density]);
+
+				// Feed chat text to the meme AI for context-aware meme selection
+				const chatText = el.getAttribute('data-text') || el.querySelector('.message')?.textContent || '';
+				if (chatText && this.memeInjector) {
+					this.memeInjector.addChatText(chatText);
+				}
 			}
 		}).catch(logger.warn);
 	}
@@ -1110,6 +1295,7 @@ export class LiveChatController {
 	close() {
 		this.unlisten();
 		this.memeInjector?.stop();
+		for (const entry of [...this.#activeMemePopups]) this.#removeMemePopup(entry);
 		this.layer.clear();
 	}
 }

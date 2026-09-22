@@ -2,6 +2,50 @@ import { logger } from './logging.mjs';
 import { store as s } from './store.mjs';
 import { isAdShowing } from './utils.mjs';
 
+/**
+ * Builds one grouped meme list for the result screen.
+ * @param {string} title section heading
+ * @param {{ text: string, count: number }[]} memes grouped meme results
+ * @param {'caught' | 'missed'} state result state used for styling
+ * @returns {HTMLElement}
+ */
+function createMemeResultSection(title, memes, state) {
+	const section = document.createElement('section');
+	section.className = `result-meme-section ${state}`;
+
+	const heading = document.createElement('h3');
+	heading.className = 'result-meme-heading';
+	heading.textContent = title;
+
+	const list = document.createElement('ul');
+	list.className = 'result-meme-list';
+	if (memes.length === 0) {
+		const emptyItem = document.createElement('li');
+		emptyItem.className = 'result-meme-empty';
+		emptyItem.textContent = 'なし';
+		list.append(emptyItem);
+	} else {
+		for (const meme of memes) {
+			const item = document.createElement('li');
+			item.className = 'result-meme-item';
+
+			const phrase = document.createElement('span');
+			phrase.className = 'result-meme-phrase';
+			phrase.textContent = meme.text;
+
+			const count = document.createElement('span');
+			count.className = 'result-meme-count';
+			count.textContent = `× ${meme.count}`;
+
+			item.append(phrase, count);
+			list.append(item);
+		}
+	}
+
+	section.append(heading, list);
+	return section;
+}
+
 export class LiveChatLayer {
 	/** @type {import("./chat_controller.mjs").LiveChatController} */
 	#controller;
@@ -68,8 +112,6 @@ export class LiveChatLayer {
 		});
 		this.scoreElement = document.createElement('div');
 		this.scoreElement.id = 'yt-lcf-score';
-		this.memePopupElement = document.createElement('div');
-		this.memePopupElement.id = 'yt-lcf-meme-popup';
 		this.timerElement = document.createElement('div');
 		this.timerElement.id = 'yt-lcf-timer';
 		this.darkOverlayElement = document.createElement('div');
@@ -78,7 +120,9 @@ export class LiveChatLayer {
 		this.resultModalElement = document.createElement('div');
 		this.resultModalElement.id = 'yt-lcf-result-modal';
 		this.resultModalElement.hidden = true;
-		this.root.append(link, ...styles, this.scoreElement, this.memePopupElement, this.timerElement, this.darkOverlayElement, this.resultModalElement);
+		this.penaltyFlashElement = document.createElement('div');
+		this.penaltyFlashElement.id = 'yt-lcf-penalty-flash';
+		this.root.append(link, ...styles, this.scoreElement, this.timerElement, this.darkOverlayElement, this.resultModalElement, this.penaltyFlashElement);
 		this.#initialElemCount = this.root.childElementCount;
 
 		const mutationObserver = new MutationObserver(() => {
@@ -101,21 +145,19 @@ export class LiveChatLayer {
 	 * @returns {LiveChatLayer} layer
 	 */
 	clear() {
-		const preserved = this.root.querySelectorAll('link,style,#yt-lcf-score,#yt-lcf-meme-popup,#yt-lcf-timer,#yt-lcf-dark-overlay,#yt-lcf-result-modal');
+		const preserved = this.root.querySelectorAll('link,style,#yt-lcf-score,#yt-lcf-timer,#yt-lcf-dark-overlay,#yt-lcf-result-modal,#yt-lcf-penalty-flash,.meme-popup');
 		this.root.replaceChildren(...preserved);
 		return this;
 	}
 
 	/**
 	 * Displays the result modal overlay.
-	 * @param {{ score: number, spawned: number, clicked: number }} stats
+	 * @param {{ score: number, spawned: number, clickedMemes: { text: string, count: number }[], missedMemes: { text: string, count: number }[] }} stats
 	 * @param {Function} onRestart callback when user clicks restart button
 	 */
 	showResultModal(stats, onRestart) {
 		this.element.classList.add('timeup');
 		this.darkOverlayElement.hidden = false;
-
-		const accuracy = stats.spawned > 0 ? Math.round((stats.clicked / stats.spawned) * 100) : 0;
 
 		this.resultModalElement.replaceChildren();
 
@@ -132,17 +174,16 @@ export class LiveChatLayer {
 
 		const spawnedItem = document.createElement('div');
 		spawnedItem.className = 'stat-item';
-		spawnedItem.innerHTML = `<span class="stat-label">流れてきたミーム</span><span class="stat-value">${stats.spawned} 個</span>`;
+		spawnedItem.innerHTML = `<span class="stat-label">流れてきたミーム数</span><span class="stat-value">${stats.spawned} 個</span>`;
 
-		const clickedItem = document.createElement('div');
-		clickedItem.className = 'stat-item';
-		clickedItem.innerHTML = `<span class="stat-label">クリックできた数</span><span class="stat-value">${stats.clicked} 個</span>`;
+		statsContainer.append(scoreItem, spawnedItem);
 
-		const accuracyItem = document.createElement('div');
-		accuracyItem.className = 'stat-item';
-		accuracyItem.innerHTML = `<span class="stat-label">ヒット率</span><span class="stat-value">${accuracy}%</span>`;
-
-		statsContainer.append(scoreItem, spawnedItem, clickedItem, accuracyItem);
+		const memeSections = document.createElement('div');
+		memeSections.className = 'result-meme-sections';
+		memeSections.append(
+			createMemeResultSection('クリックできたミーム', stats.clickedMemes, 'caught'),
+			createMemeResultSection('見逃したミーム', stats.missedMemes, 'missed'),
+		);
 
 		const btnGroup = document.createElement('div');
 		btnGroup.className = 'result-btn-group';
@@ -165,7 +206,7 @@ export class LiveChatLayer {
 
 		btnGroup.append(restartBtn, titleBtn);
 
-		this.resultModalElement.append(title, statsContainer, btnGroup);
+		this.resultModalElement.append(title, statsContainer, memeSections, btnGroup);
 		this.resultModalElement.hidden = false;
 	}
 

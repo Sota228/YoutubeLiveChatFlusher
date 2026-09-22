@@ -45,6 +45,11 @@ export const DEFAULT_CONFIG = Object.freeze({
 		timer_enabled: 1,
 		timer_duration: 60,
 		timer_position: 'top-left',
+		block_player_interactions: 1,
+		meme_miss_penalty_enabled: 1,
+		meme_interval_min: 3,
+		meme_interval_max: 15,
+		meme_batch_max: 3,
 	},
 	parts: {
 		normal: { photo: false, name: false, message: true, color: '', strokeColor: '' },
@@ -175,7 +180,9 @@ class ConfigStore {
 	 */
 	async load(json = undefined) {
 		/** @type {Partial<UnwrapReadonly<typeof this.data>>} */
-		const stored = json ?? await browser.storage.local.get(null);
+		// Only load public configuration sections. Secrets stored under separate
+		// top-level keys (for example gemini_api_key) must stay out of content scripts.
+		const stored = json ?? await browser.storage.local.get(Object.keys(this.data));
 		this.migrate(stored);
 		Object.assign(this.data.styles, stored.styles);
 		Object.assign(this.data.others, stored.others);

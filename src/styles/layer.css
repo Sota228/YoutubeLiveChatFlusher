@@ -4,6 +4,7 @@
 }
 :host {
 	contain: strict;
+	container-type: size;
 }
 :host > div {
 	animation: flush var(--yt-lcf-animation-duration) linear var(--yt-lcf-animation-play-state);
@@ -348,8 +349,8 @@ small.original {
 	display: none !important;
 }
 
-/* Meme click popup (center of video) */
-#yt-lcf-meme-popup {
+/* Meme click popup (center of video, or offset when several are shown at once) */
+:host > .meme-popup {
 	/* Overrides `:host > div`'s flush-scroll animation, which would otherwise hijack `transform`. */
 	animation: none;
 	overflow: visible;
@@ -357,13 +358,14 @@ small.original {
 	top: 50%;
 	left: 50%;
 	z-index: 1001;
-	width: 92%;
+	width: 80%;
 	padding: 0.2em 0.4em;
 	font-family: inherit;
 	font-size: 10vw; /* fallback; actual size is computed per-text in JS to fill the video width */
 	font-weight: 900;
 	line-height: 1.1;
-	white-space: nowrap;
+	white-space: normal;
+	overflow-wrap: anywhere;
 	text-align: center;
 	color: red;
 	text-shadow: 0 0 8px rgba(0, 0, 0, 0.8), 0 0 24px currentColor;
@@ -374,9 +376,13 @@ small.original {
 	transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-#yt-lcf-meme-popup.show {
+:host > .meme-popup.show {
 	opacity: 0.8;
 	animation: meme-popup-bounce 0.45s cubic-bezier(.34, 1.56, .64, 1) forwards;
+}
+
+:host > .meme-popup.caught {
+	color: #2ecc40;
 }
 
 @keyframes meme-popup-bounce {
@@ -450,6 +456,26 @@ small.original {
 	display: none !important;
 }
 
+/* Penalty flash (clicking a non-meme comment) */
+#yt-lcf-penalty-flash {
+	animation: none;
+	position: absolute;
+	inset: 0;
+	z-index: 999;
+	background: rgba(255, 0, 0, 0.35);
+	pointer-events: none;
+	opacity: 0;
+}
+
+#yt-lcf-penalty-flash.flash {
+	animation: penalty-flash 0.35s ease-out;
+}
+
+@keyframes penalty-flash {
+	0% { opacity: 0.6; }
+	100% { opacity: 0; }
+}
+
 /* Timeup state - pause animations */
 :host(.timeup) > div:not(#yt-lcf-dark-overlay):not(#yt-lcf-result-modal) {
 	animation-play-state: paused !important;
@@ -458,11 +484,8 @@ small.original {
 
 /* Dark Overlay */
 #yt-lcf-dark-overlay {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100vw;
-	height: 100vh;
+	position: absolute;
+	inset: 0;
 	background: rgba(0, 0, 0, 0.75);
 	backdrop-filter: blur(4px);
 	z-index: 999998;
@@ -475,7 +498,7 @@ small.original {
 
 /* Result Modal Overlay */
 #yt-lcf-result-modal {
-	position: fixed;
+	position: absolute;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
@@ -484,9 +507,13 @@ small.original {
 	border: 2px solid #ff6ec7;
 	box-shadow: 0 0 25px rgba(255, 110, 199, 0.5), 0 10px 30px rgba(0, 0, 0, 0.8);
 	border-radius: 16px;
-	padding: 24px 32px;
-	min-width: 320px;
-	max-width: 90vw;
+	padding: clamp(10px, 3cqh, 24px) clamp(12px, 4cqw, 32px);
+	min-width: 0;
+	width: min(720px, calc(100% - 24px));
+	height: auto;
+	max-width: none;
+	max-height: calc(100% - 24px);
+	box-sizing: border-box;
 	color: #ffffff;
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	text-align: center;
@@ -495,7 +522,8 @@ small.original {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 20px;
+	gap: clamp(8px, 2cqh, 20px);
+	overflow-y: auto;
 	animation: modal-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -510,7 +538,7 @@ small.original {
 
 #yt-lcf-result-modal .result-title {
 	margin: 0;
-	font-size: 1.8rem;
+	font-size: clamp(1.1rem, 5cqh, 1.8rem);
 	font-weight: 800;
 	background: linear-gradient(45deg, #ff6ec7, #ffd700);
 	-webkit-background-clip: text;
@@ -520,9 +548,10 @@ small.original {
 
 #yt-lcf-result-modal .result-stats {
 	width: 100%;
+	flex: 0 0 auto;
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: clamp(6px, 1.5cqh, 12px);
 }
 
 #yt-lcf-result-modal .stat-item {
@@ -530,7 +559,7 @@ small.original {
 	justify-content: space-between;
 	align-items: center;
 	background: rgba(255, 255, 255, 0.07);
-	padding: 10px 16px;
+	padding: clamp(5px, 1.4cqh, 10px) clamp(8px, 2cqw, 16px);
 	border-radius: 8px;
 	border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -541,27 +570,113 @@ small.original {
 }
 
 #yt-lcf-result-modal .stat-label {
-	font-size: 0.95rem;
+	font-size: clamp(0.75rem, 3cqh, 0.95rem);
 	font-weight: 600;
 	color: #ddd;
 }
 
 #yt-lcf-result-modal .stat-value {
-	font-size: 1.2rem;
+	font-size: clamp(0.9rem, 3.5cqh, 1.2rem);
 	font-weight: 700;
 	color: #ffd700;
 }
 
+#yt-lcf-result-modal .result-meme-sections {
+	width: 100%;
+	flex: 0 1 auto;
+	min-height: 0;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+}
+
+#yt-lcf-result-modal .result-meme-section {
+	min-width: 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	background: rgba(255, 255, 255, 0.07);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+#yt-lcf-result-modal .result-meme-section.caught {
+	border-color: rgba(46, 204, 64, 0.45);
+}
+
+#yt-lcf-result-modal .result-meme-section.missed {
+	border-color: rgba(255, 80, 80, 0.45);
+}
+
+#yt-lcf-result-modal .result-meme-heading {
+	margin: 0;
+	padding: clamp(5px, 1.5cqh, 10px) 12px;
+	font-size: clamp(0.95rem, min(3.1cqw, 4.5cqh), 1.2rem);
+	background: rgba(0, 0, 0, 0.25);
+}
+
+#yt-lcf-result-modal .caught .result-meme-heading {
+	color: #65e875;
+}
+
+#yt-lcf-result-modal .missed .result-meme-heading {
+	color: #ff7777;
+}
+
+#yt-lcf-result-modal .result-meme-list {
+	min-height: 0;
+	margin: 0;
+	padding: 6px 10px;
+	list-style: none;
+	max-height: min(34cqh, 280px);
+	font-size: clamp(0.9rem, min(3cqw, 4.3cqh), 1.15rem);
+	line-height: 1.3;
+	overflow-y: auto;
+}
+
+#yt-lcf-result-modal .result-meme-item {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 7px 2px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	text-align: left;
+}
+
+#yt-lcf-result-modal .result-meme-item:last-child {
+	border-bottom: none;
+}
+
+#yt-lcf-result-modal .result-meme-phrase {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+#yt-lcf-result-modal .result-meme-count {
+	flex: 0 0 auto;
+	font-weight: 700;
+	color: #ffd700;
+}
+
+#yt-lcf-result-modal .result-meme-empty {
+	padding: 14px 2px;
+	color: #aaa;
+}
+
 #yt-lcf-result-modal .result-btn-group {
 	width: 100%;
+	flex: 0 0 auto;
 	display: flex;
 	gap: 12px;
 }
 
 #yt-lcf-result-modal .result-btn {
 	flex: 1;
-	padding: 12px 16px;
-	font-size: 1rem;
+	min-width: 0;
+	padding: clamp(7px, 1.8cqh, 12px) clamp(8px, 2cqw, 16px);
+	font-size: clamp(0.75rem, 3cqh, 1rem);
 	font-weight: 700;
 	color: #ffffff;
 	border: none;
@@ -571,7 +686,8 @@ small.original {
 	align-items: center;
 	justify-content: center;
 	gap: 6px;
-	white-space: nowrap;
+	line-height: 1.2;
+	white-space: normal;
 	transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
@@ -604,4 +720,17 @@ small.original {
 
 #yt-lcf-result-modal .result-btn-title:active {
 	transform: translateY(1px) scale(0.98);
+}
+
+@container (max-width: 600px) {
+	#yt-lcf-result-modal {
+		width: calc(100% - 16px);
+		max-height: calc(100% - 16px);
+	}
+}
+
+@container (max-width: 420px) {
+	#yt-lcf-result-modal .result-meme-sections {
+		grid-template-columns: 1fr;
+	}
 }

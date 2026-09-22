@@ -3,7 +3,9 @@
 	"name": "__MSG_manifestName__",
 	"version": "0.16.5",
 	"author": "_y_s",
-	"action": {},
+	"action": {
+		"default_state": "enabled"
+	},
 	"background": {
 		"service_worker": "sw.js",
 		"type": "module"
