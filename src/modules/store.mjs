@@ -45,6 +45,7 @@ export const DEFAULT_CONFIG = Object.freeze({
 		timer_enabled: 1,
 		timer_duration: 60,
 		timer_position: 'top-left',
+		block_player_interactions: 1,
 		meme_miss_penalty_enabled: 1,
 		meme_interval_min: 3,
 		meme_interval_max: 15,

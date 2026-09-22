@@ -99,6 +99,7 @@ const {
 	score_enabled,
 	timer_enabled,
 	meme_miss_penalty_enabled,
+	block_player_interactions,
 	person_detector_device,
 	translation_method,
 	translation_bodyType,
@@ -172,6 +173,7 @@ s.load().then(() => {
 
 	// miss penalty
 	meme_miss_penalty_enabled.value = (s.others.meme_miss_penalty_enabled ?? 1).toString();
+	block_player_interactions.value = (s.others.block_player_interactions ?? 1).toString();
 
 	// meme injection timing
 	meme_interval_min.value = (s.others.meme_interval_min ?? 3).toString();
@@ -374,6 +376,7 @@ form.addEventListener('submit', async e => {
 			timer_duration: Math.max(1, Number.parseInt(timer_duration.value, 10) || 60),
 			timer_position: timer_position.value,
 			meme_miss_penalty_enabled: Number.parseInt(meme_miss_penalty_enabled.value, 10),
+			block_player_interactions: Number.parseInt(block_player_interactions.value, 10),
 			meme_interval_min: Math.max(1, Number.parseInt(meme_interval_min.value, 10) || 3),
 			meme_interval_max: Math.max(1, Number.parseInt(meme_interval_max.value, 10) || 15),
 			meme_batch_max: Math.max(1, Number.parseInt(meme_batch_max.value, 10) || 3),

@@ -114,6 +114,14 @@ export class LiveChatController {
 		const root = this.layer.root;
 		this.layoutCache = new LiveChatLayoutCache(root);
 		this.itemFactory = new LiveChatItemFactory();
+		this.#updatePlayerInteractionLock();
+		for (const eventName of ['click', 'dblclick']) {
+			this.layer.element.addEventListener(eventName, e => {
+				if (this.isTimeUp || !(s.others.block_player_interactions ?? 1)) return;
+				e.preventDefault();
+				e.stopImmediatePropagation();
+			}, { passive: false });
+		}
 
 		root.addEventListener('contextmenu', e => {
 			/** @type {?HTMLElement | undefined} */
@@ -194,6 +202,7 @@ export class LiveChatController {
 			if (area === 'local') {
 				s.load().then(() => {
 					this.updateScoreDisplay();
+					this.#updatePlayerInteractionLock();
 					if (changes.timer_enabled || changes.timer_duration) {
 						this.startTimer();
 					}
@@ -201,6 +210,14 @@ export class LiveChatController {
 				if ('memes' in changes) refreshEnabledMemesCache();
 			}
 		});
+	}
+
+	/** Makes the layer receive blank-area clicks only while player interaction blocking is enabled. */
+	#updatePlayerInteractionLock() {
+		this.layer.element.classList.toggle(
+			'block-player-interactions',
+			Boolean(s.others.block_player_interactions ?? 1),
+		);
 	}
 
 	async start() {
