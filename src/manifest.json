@@ -4,7 +4,7 @@
 	"version": "0.16.5",
 	"author": "_y_s",
 	"action": {
-		"default_state": "disabled"
+		"default_state": "enabled"
 	},
 	"background": {
 		"service_worker": "sw.js",
@@ -41,7 +41,7 @@
 	"permissions": ["storage", "unlimitedStorage"],
 	"web_accessible_resources": [
 		{
-			"resources": ["assets/*", "modules/*", "injections/*", "styles/*", "templates/*", "images/*"],
+			"resources": ["assets/*", "modules/*", "injections/*", "styles/*", "templates/*", "images/*", "home.html", "home.css", "home.js"],
 			"matches": ["https://www.youtube.com/*", "https://m.youtube.com/*"]
 		}
 	]

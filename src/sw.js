@@ -25,6 +25,10 @@ const events = {
 	async openOptions() {
 		return browser.runtime.openOptionsPage();
 	},
+	async openHome() {
+		const homeUrl = browser.runtime.getURL('home.html');
+		return browser.tabs.create({ url: homeUrl });
+	},
 
 	/**
 	 * Sends an installation notification to the user.
@@ -49,7 +53,7 @@ const events = {
 };
 
 browser.action.onClicked.addListener(() => {
-	events.openOptions();
+	events.openHome();
 });
 
 browser.tabs.onActivated.addListener(async ({ tabId }) => {

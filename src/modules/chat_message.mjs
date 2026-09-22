@@ -2,6 +2,7 @@ import { logger } from './logging.mjs';
 import { fetchInnerTube } from './innertube.mjs';
 import { store as s } from './store.mjs';
 import { getColorRGB, getText, loadTemplateDocument, refreshWordsList } from './utils.mjs';
+import { getCachedEnabledMemes } from './meme_manager.mjs';
 
 const AuthorType = Object.freeze({
 	NORMAL: 'normal',
@@ -260,13 +261,24 @@ export async function renderChatItem(item, factory) {
 			const subtype = getAuthorType(renderer);
 			skipped = allHidden(subtype);
 			if (skipped) break;
+			const text = getText(renderer.message);
 			element = factory.new({
 				type: 'text',
 				subtype,
 				author: await fetchAuthorInfo(renderer, subtype),
 				body,
-				text: getText(renderer.message),
+				text,
 			});
+			// If this real comment happens to contain a registered meme's text, make it clickable
+			// just like an injected meme comment (color change, score, popup, audio on click).
+			const matchedMeme = getCachedEnabledMemes().find(m => m.text && text.includes(m.text));
+			if (matchedMeme && element) {
+				element.classList.add('meme');
+				element.dataset.memeId = matchedMeme.id;
+				element.dataset.audioUrl = matchedMeme.audioDataUrl || matchedMeme.audioUrl || '';
+				element.dataset.text = matchedMeme.text;
+				if (matchedMeme.color) element.dataset.color = matchedMeme.color;
+			}
 			break;
 		}
 		case 'liveChatMembershipItemRenderer': {
