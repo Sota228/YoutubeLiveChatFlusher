@@ -160,8 +160,7 @@ export class LiveChatLayer {
 		titleBtn.className = 'result-btn result-btn-title';
 		titleBtn.textContent = '🏠 タイトル画面へ';
 		titleBtn.addEventListener('click', () => {
-			if (onTitle) onTitle();
-			else window.open(browser.runtime.getURL('home.html'), '_blank');
+			location.href = browser.runtime.getURL('home.html');
 		});
 
 		btnGroup.append(restartBtn, titleBtn);
