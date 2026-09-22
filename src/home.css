@@ -3,10 +3,10 @@
 	--color-primary-glow: rgba(255, 45, 135, 0.45);
 	--color-secondary: #00d2ff;
 	--color-secondary-glow: rgba(0, 210, 255, 0.45);
-	--color-bg-dark: rgba(15, 18, 30, 0.75);
-	--color-card-border: rgba(255, 255, 255, 0.2);
+	--color-bg-dark: rgba(10, 12, 24, 0.28);
+	--color-card-border: rgba(255, 255, 255, 0.25);
 	--text-main: #ffffff;
-	--text-muted: #b8c1ec;
+	--text-muted: #d0d7f7;
 	--font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
@@ -45,7 +45,7 @@ html, body {
 	background-image: url('assets/images/home_bg.jpg');
 	background-size: cover;
 	background-position: center 30%;
-	filter: brightness(0.85) contrast(1.05);
+	filter: brightness(0.95) contrast(1.05);
 	transform: scale(1.02);
 	transition: transform 10s ease-out;
 }
@@ -60,8 +60,8 @@ body:hover .bg-image {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: radial-gradient(circle at center, rgba(10, 15, 30, 0.35) 0%, rgba(5, 8, 18, 0.78) 100%),
-	            linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, rgba(10, 12, 24, 0.6) 100%);
+	background: radial-gradient(circle at center, rgba(10, 15, 30, 0.1) 0%, rgba(5, 8, 18, 0.45) 100%),
+	            linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(10, 12, 24, 0.3) 100%);
 }
 
 /* Layout */
@@ -117,14 +117,14 @@ body:hover .bg-image {
 	width: 100%;
 	max-width: 580px;
 	background: var(--color-bg-dark);
-	backdrop-filter: blur(16px);
-	-webkit-backdrop-filter: blur(16px);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
 	border: 1px solid var(--color-card-border);
 	border-radius: 24px;
 	padding: 36px 32px 28px;
-	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 
-	            0 0 40px rgba(255, 45, 135, 0.15),
-	            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+	box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 
+	            0 0 30px rgba(255, 45, 135, 0.15),
+	            inset 0 1px 0 rgba(255, 255, 255, 0.35);
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
@@ -160,7 +160,7 @@ body:hover .bg-image {
 	font-weight: 900;
 	color: #fff;
 	letter-spacing: 0.05em;
-	text-shadow: 0 0 16px var(--color-primary), 0 3px 6px rgba(0, 0, 0, 0.6);
+	text-shadow: 0 0 16px var(--color-primary), 0 3px 6px rgba(0, 0, 0, 0.8), 0 0 4px #000;
 }
 
 .symbol-male {
@@ -168,7 +168,7 @@ body:hover .bg-image {
 	font-size: 0.9em;
 	display: inline-block;
 	margin-left: 2px;
-	text-shadow: 0 0 16px var(--color-secondary);
+	text-shadow: 0 0 16px var(--color-secondary), 0 0 4px #000;
 }
 
 .title-sub {
@@ -178,12 +178,14 @@ body:hover .bg-image {
 	background: linear-gradient(135deg, #ff6ec7, #00d2ff);
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
+	filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
 }
 
 .tagline {
 	margin-top: 10px;
 	font-size: 0.95rem;
 	color: var(--text-muted);
+	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 /* Form */
@@ -197,8 +199,10 @@ body:hover .bg-image {
 	position: relative;
 	display: flex;
 	align-items: center;
-	background: rgba(10, 12, 22, 0.7);
-	border: 2px solid rgba(255, 255, 255, 0.18);
+	background: rgba(10, 12, 22, 0.45);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	border: 2px solid rgba(255, 255, 255, 0.25);
 	border-radius: 14px;
 	padding: 4px 6px 4px 14px;
 	transition: all 0.25s ease;
