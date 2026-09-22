@@ -150,6 +150,26 @@ export async function getEnabledMemes() {
 	return memes.filter(m => m.enabled);
 }
 
+/** @type {MemeEntry[]} in-memory cache, refreshed via {@link refreshEnabledMemesCache} */
+let enabledMemesCache = [];
+
+/**
+ * Refreshes the synchronous in-memory cache of enabled memes from storage.
+ * @returns {Promise<MemeEntry[]>} the refreshed list
+ */
+export async function refreshEnabledMemesCache() {
+	enabledMemesCache = await getEnabledMemes();
+	return enabledMemesCache;
+}
+
+/**
+ * Synchronously returns the enabled memes as of the last {@link refreshEnabledMemesCache} call.
+ * @returns {MemeEntry[]}
+ */
+export function getCachedEnabledMemes() {
+	return enabledMemesCache;
+}
+
 /**
  * Reads a File as a data URL string.
  * @param {File} file audio file
