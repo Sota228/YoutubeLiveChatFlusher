@@ -188,8 +188,8 @@ export class MemeInjector {
 		const modeOptions = ['dense', 'random'];
 		layoutChatItem(el, this.#layoutCache, modeOptions[s.others.density]);
 
-		if (this.#layer.controller && typeof this.#layer.controller.spawnedMemeCount === 'number') {
-			this.#layer.controller.spawnedMemeCount++;
+		if (this.#layer.controller && typeof this.#layer.controller.recordSpawnedMeme === 'function') {
+			this.#layer.controller.recordSpawnedMeme(el);
 		}
 	}
 

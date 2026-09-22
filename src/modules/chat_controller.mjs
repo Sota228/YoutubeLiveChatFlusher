@@ -96,6 +96,8 @@ export class LiveChatController {
 	spawnedMemeCount = 0;
 	/** @type {number} */
 	clickedMemeCount = 0;
+	/** @type {Map<string, { text: string, caught: boolean }>} */
+	memeResults = new Map();
 	/** @type {boolean} */
 	isTimeUp = false;
 	/** @type {?HTMLAudioElement} */
@@ -140,6 +142,8 @@ export class LiveChatController {
 				if (!memeEl.dataset.scored) {
 					memeEl.dataset.scored = 'true';
 					this.clickedMemeCount++;
+					const result = this.memeResults.get(memeEl.id);
+					if (result) result.caught = true;
 					this.addScore(100);
 					if (s.others.timer_enabled ?? 0) {
 						const maxTime = s.others.timer_duration ?? 60;
@@ -248,6 +252,33 @@ export class LiveChatController {
 		this.memeInjector = new MemeInjector(this.layer, this.layoutCache, this.player);
 		this.memeInjector.start();
 		refreshEnabledMemesCache();
+	}
+
+	/**
+	 * Records a meme when it is injected so its final caught/missed state survives DOM removal.
+	 * @param {HTMLElement} memeEl injected meme element
+	 */
+	recordSpawnedMeme(memeEl) {
+		this.spawnedMemeCount++;
+		this.memeResults.set(memeEl.id, {
+			text: memeEl.dataset.text || '',
+			caught: false,
+		});
+	}
+
+	/**
+	 * Groups meme results by phrase for display in the result screen.
+	 * @param {boolean} caught whether to return caught or missed memes
+	 * @returns {{ text: string, count: number }[]}
+	 */
+	#summarizeMemeResults(caught) {
+		/** @type {Map<string, number>} */
+		const counts = new Map();
+		for (const result of this.memeResults.values()) {
+			if (result.caught !== caught) continue;
+			counts.set(result.text, (counts.get(result.text) || 0) + 1);
+		}
+		return [...counts].map(([text, count]) => ({ text, count }));
 	}
 
 	/**
@@ -415,7 +446,8 @@ export class LiveChatController {
 			{
 				score: this.score,
 				spawned: this.spawnedMemeCount,
-				clicked: this.clickedMemeCount,
+				clickedMemes: this.#summarizeMemeResults(true),
+				missedMemes: this.#summarizeMemeResults(false),
 			},
 			() => this.restartGame(),
 			() => this.returnToTitle()
@@ -455,6 +487,7 @@ export class LiveChatController {
 		this.isTimeUp = false;
 		this.spawnedMemeCount = 0;
 		this.clickedMemeCount = 0;
+		this.memeResults.clear();
 		this.score = 0;
 		await browser.storage.local.set({ meme_score: 0 });
 
