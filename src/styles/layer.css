@@ -379,6 +379,10 @@ small.original {
 	animation: meme-popup-bounce 0.45s cubic-bezier(.34, 1.56, .64, 1) forwards;
 }
 
+#yt-lcf-meme-popup.caught {
+	color: #2ecc40;
+}
+
 @keyframes meme-popup-bounce {
 	0% { transform: translate(-50%, -50%) scale(0.4); }
 	60% { transform: translate(-50%, -50%) scale(1.15); }
@@ -448,6 +452,26 @@ small.original {
 
 #yt-lcf-timer[hidden] {
 	display: none !important;
+}
+
+/* Penalty flash (clicking a non-meme comment) */
+#yt-lcf-penalty-flash {
+	animation: none;
+	position: absolute;
+	inset: 0;
+	z-index: 999;
+	background: rgba(255, 0, 0, 0.35);
+	pointer-events: none;
+	opacity: 0;
+}
+
+#yt-lcf-penalty-flash.flash {
+	animation: penalty-flash 0.35s ease-out;
+}
+
+@keyframes penalty-flash {
+	0% { opacity: 0.6; }
+	100% { opacity: 0; }
 }
 
 /* Timeup state - pause animations */

@@ -98,6 +98,7 @@ const {
 	message_pause,
 	score_enabled,
 	timer_enabled,
+	meme_miss_penalty_enabled,
 	person_detector_device,
 	translation_method,
 	translation_bodyType,
@@ -111,6 +112,7 @@ const {
 	hotkey_panel_key, hotkey_panel_alt,
 	hotkey_pip_key, hotkey_pip_alt,
 	timer_duration,
+	meme_interval_min, meme_interval_max, meme_batch_max,
 	translation_blacklist_regexp,
 	translation_url, translation_apiKey, translation_modelName,
 } = form.elements;
@@ -167,6 +169,14 @@ s.load().then(() => {
 	timer_enabled.value = (s.others.timer_enabled ?? 0).toString();
 	timer_duration.value = (s.others.timer_duration ?? 60).toString();
 	timer_position.value = s.others.timer_position ?? 'top-right';
+
+	// miss penalty
+	meme_miss_penalty_enabled.value = (s.others.meme_miss_penalty_enabled ?? 1).toString();
+
+	// meme injection timing
+	meme_interval_min.value = (s.others.meme_interval_min ?? 3).toString();
+	meme_interval_max.value = (s.others.meme_interval_max ?? 15).toString();
+	meme_batch_max.value = (s.others.meme_batch_max ?? 3).toString();
 
 	// person detection
 	person_detector_device.value = s.personDetection.device;
@@ -336,6 +346,10 @@ form.addEventListener('submit', async e => {
 			timer_enabled: Number.parseInt(timer_enabled.value, 10),
 			timer_duration: Math.max(1, Number.parseInt(timer_duration.value, 10) || 60),
 			timer_position: timer_position.value,
+			meme_miss_penalty_enabled: Number.parseInt(meme_miss_penalty_enabled.value, 10),
+			meme_interval_min: Math.max(1, Number.parseInt(meme_interval_min.value, 10) || 3),
+			meme_interval_max: Math.max(1, Number.parseInt(meme_interval_max.value, 10) || 15),
+			meme_batch_max: Math.max(1, Number.parseInt(meme_batch_max.value, 10) || 3),
 		},
 		/** @type {Partial<typeof s.data.hotkeys>} */
 		hotkeys: {

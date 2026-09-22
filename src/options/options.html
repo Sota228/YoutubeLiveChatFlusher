@@ -182,6 +182,24 @@
 	<section>
 		<h2>Net Memes</h2>
 		<dl>
+			<dt>Injection Timing (差し込みタイミング)</dt>
+			<dd>
+				<table>
+					<tr>
+						<th>Interval (秒間隔, ランダム)</th>
+						<td>
+							<input type="number" name="meme_interval_min" min="1" max="600" style="width: 70px;"> 〜
+							<input type="number" name="meme_interval_max" min="1" max="600" style="width: 70px;"> 秒
+						</td>
+					</tr>
+					<tr>
+						<th>Max Simultaneous (最大同時投下数)</th>
+						<td>
+							<input type="number" name="meme_batch_max" min="1" max="10" style="width: 70px;">
+						</td>
+					</tr>
+				</table>
+			</dd>
 			<dt>Registered Memes</dt>
 			<dd>
 				<table id="meme-list" style="width: 100%; border-collapse: collapse; margin-bottom: 1em;">
@@ -272,6 +290,24 @@
 								<option value="center">Center (画面の中央)</option>
 								<option value="top-left">Top Left (左上)</option>
 							</select>
+						</td>
+					</tr>
+				</table>
+			</dd>
+			<dt>Miss Penalty (見逃しペナルティ)</dt>
+			<dd>
+				<table>
+					<tr>
+						<th>Penalize missed memes (見逃し時にペナルティ)</th>
+						<td>
+							<label>
+								<input type="radio" name="meme_miss_penalty_enabled" value="0">
+								<span>OFF</span>
+							</label>
+							<label>
+								<input type="radio" name="meme_miss_penalty_enabled" value="1">
+								<span>ON</span>
+							</label>
 						</td>
 					</tr>
 				</table>
