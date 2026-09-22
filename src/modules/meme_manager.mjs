@@ -64,9 +64,22 @@ export async function loadMemes() {
 		return defaults;
 	}
 
+	const defaultsMap = new Map(defaults.map(d => [d.id, d]));
+	let updated = false;
+
+	// Update audio URLs for existing presets if default_memes changed
+	for (const meme of userMemes) {
+		if ((meme.isPreset || meme.id.startsWith('preset_')) && defaultsMap.has(meme.id)) {
+			const def = defaultsMap.get(meme.id);
+			if (def && meme.audioDataUrl !== def.audioDataUrl) {
+				meme.audioDataUrl = def.audioDataUrl;
+				updated = true;
+			}
+		}
+	}
+
 	// Always ensure any newly added preset in default_memes.json exists unless explicitly saved
 	const existingIds = new Set(userMemes.map(m => m.id));
-	let updated = false;
 	for (const preset of defaults) {
 		if (!existingIds.has(preset.id)) {
 			userMemes.push(preset);
