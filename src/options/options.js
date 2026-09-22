@@ -98,6 +98,7 @@ const {
 	message_pause,
 	score_enabled,
 	timer_enabled,
+	meme_miss_penalty_enabled,
 	person_detector_device,
 	translation_method,
 	translation_bodyType,
@@ -167,6 +168,9 @@ s.load().then(() => {
 	timer_enabled.value = (s.others.timer_enabled ?? 0).toString();
 	timer_duration.value = (s.others.timer_duration ?? 60).toString();
 	timer_position.value = s.others.timer_position ?? 'top-right';
+
+	// miss penalty
+	meme_miss_penalty_enabled.value = (s.others.meme_miss_penalty_enabled ?? 1).toString();
 
 	// person detection
 	person_detector_device.value = s.personDetection.device;
@@ -336,6 +340,7 @@ form.addEventListener('submit', async e => {
 			timer_enabled: Number.parseInt(timer_enabled.value, 10),
 			timer_duration: Math.max(1, Number.parseInt(timer_duration.value, 10) || 60),
 			timer_position: timer_position.value,
+			meme_miss_penalty_enabled: Number.parseInt(meme_miss_penalty_enabled.value, 10),
 		},
 		/** @type {Partial<typeof s.data.hotkeys>} */
 		hotkeys: {

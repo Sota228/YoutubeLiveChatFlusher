@@ -146,6 +146,10 @@ export class LiveChatController {
 			const elem = /** @type {HTMLElement} */ (e.target);
 			// Skip persistent overlay elements; only recycle finished flush-scroll chat messages.
 			if (elem.id.startsWith('yt-lcf-')) return;
+			if (!this.isTimeUp && elem.classList.contains('meme') && !elem.classList.contains('played') && (s.others.meme_miss_penalty_enabled ?? 1)) {
+				this.#showMemePopup(elem);
+				this.#applyPenalty();
+			}
 			if (elem.parentNode === root) {
 				this.layoutCache.delete(elem.id);
 				elem.remove();

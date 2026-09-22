@@ -45,6 +45,7 @@ export const DEFAULT_CONFIG = Object.freeze({
 		timer_enabled: 1,
 		timer_duration: 60,
 		timer_position: 'top-left',
+		meme_miss_penalty_enabled: 1,
 	},
 	parts: {
 		normal: { photo: false, name: false, message: true, color: '', strokeColor: '' },
