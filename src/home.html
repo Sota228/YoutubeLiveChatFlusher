@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ミーム♂コミュニケーション - YouTube LiveChat Flusher</title>
+	<link rel="stylesheet" href="home.css">
+	<link rel="icon" href="images/icon32.png">
+</head>
+<body>
+	<div class="bg-container">
+		<div class="bg-image"></div>
+		<div class="bg-overlay"></div>
+	</div>
+
+	<main class="container">
+		<header class="header">
+			<div class="score-badge" id="score-badge">
+				<span class="score-label">SCORE</span>
+				<span class="score-value" id="current-score">000000</span>
+			</div>
+		</header>
+
+		<div class="content-card">
+			<div class="title-section">
+				<h1 class="main-title">
+					<span class="title-meme">ミーム<span class="symbol-male">♂</span></span>
+					<span class="title-sub">コミュニケーション</span>
+				</h1>
+				<p class="tagline">YouTube動画のURLを入力して、弾幕ミームの世界へ飛び込もう！</p>
+			</div>
+
+			<form id="url-form" class="form-section">
+				<div class="input-wrapper">
+					<span class="input-icon">▶</span>
+					<input 
+						type="url" 
+						id="youtube-url" 
+						placeholder="https://www.youtube.com/watch?v=..." 
+						autocomplete="off" 
+						spellcheck="false"
+						required
+					>
+					<button type="button" id="paste-btn" class="icon-btn" title="クリップボードから貼り付け">
+						📋 貼付
+					</button>
+				</div>
+
+				<div class="quick-links">
+					<span class="quick-label">サンプル:</span>
+					<button type="button" class="quick-btn" data-url="https://www.youtube.com/watch?v=3j2uRSSin74">神楽めあ新衣装</button>
+					<button type="button" class="quick-btn" data-url="https://www.youtube.com/watch?v=jfKfPfyJRdk">lofi hip hop radio</button>
+				</div>
+
+				<div id="error-message" class="error-message" hidden>
+					有効なYouTubeのURL（youtube.com または youtu.be）を入力してください。
+				</div>
+
+				<button type="submit" id="start-btn" class="start-btn">
+					<span class="btn-text">START</span>
+					<span class="btn-arrow">▶▶</span>
+				</button>
+			</form>
+
+			<footer class="card-footer">
+				<a href="options/options.html" class="footer-link" id="options-link">
+					⚙️ ミーム・拡張機能設定
+				</a>
+			</footer>
+		</div>
+	</main>
+
+	<script src="home.js" type="module"></script>
+</body>
+</html>

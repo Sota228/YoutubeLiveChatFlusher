@@ -26,13 +26,13 @@
 	{
 		"id": "preset_05",
 		"text": "厳しいって",
-		"audioFile": "assets/audio/きびしって.mp3",
+		"audioFile": "assets/audio/厳しいって.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_06",
 		"text": "ぎこぎこはしません",
-		"audioFile": "assets/audio/ぎこぎこ.mp3",
+		"audioFile": "assets/audio/ぎこぎこはしません.mp3",
 		"enabled": true
 	},
 	{
@@ -44,7 +44,7 @@
 	{
 		"id": "preset_08",
 		"text": "このはげー違うだろ",
-		"audioFile": "assets/audio/このはげ.mp3",
+		"audioFile": "assets/audio/このはげ違うだろ違うだろ.mp3",
 		"enabled": true
 	},
 	{
@@ -74,13 +74,13 @@
 	{
 		"id": "preset_13",
 		"text": "ドブカスが",
-		"audioFile": "assets/audio/どぶかすが.mp3",
+		"audioFile": "assets/audio/ドブカスが.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_14",
 		"text": "離せっ！",
-		"audioFile": "assets/audio/はなせ.mp3",
+		"audioFile": "assets/audio/離せ.mp3",
 		"enabled": true
 	},
 	{
@@ -104,13 +104,13 @@
 	{
 		"id": "preset_18",
 		"text": "アタタメテクダサイトイッテオマエ",
-		"audioFile": "assets/audio/ガニエフ.mp3",
+		"audioFile": "assets/audio/アタタメテクダサイトイッテオマエ.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_19",
 		"text": "ランランルー",
-		"audioFile": "assets/audio/ランランル.mp3",
+		"audioFile": "assets/audio/ランランルー.mp3",
 		"enabled": true
 	},
 	{
@@ -134,13 +134,13 @@
 	{
 		"id": "preset_23",
 		"text": "君のような勘のいいガキは嫌いだよ",
-		"audioFile": "assets/audio/君のような勘のいいガキは嫌いだよ（鋼の錬金術師）.mp3",
+		"audioFile": "assets/audio/君のような勘のいいガキは嫌いだよ.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_24",
 		"text": "大概にせぇよ",
-		"audioFile": "assets/audio/大概にせいよ.mp3",
+		"audioFile": "assets/audio/大概にせぇよ.mp3",
 		"enabled": true
 	},
 	{
@@ -152,7 +152,7 @@
 	{
 		"id": "preset_26",
 		"text": "引っ越し引っ越し",
-		"audioFile": "assets/audio/騒音おばさん.mp3",
+		"audioFile": "assets/audio/引っ越し引っ越し.mp3",
 		"enabled": true
 	},
 	{
@@ -176,13 +176,13 @@
 	{
 		"id": "preset_30",
 		"text": "21歳",
-		"audioFile": "assets/audio/男性「21歳」.mp3",
+		"audioFile": "assets/audio/21歳.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_31",
 		"text": "もちろん俺らは抵抗するで？",
-		"audioFile": "assets/audio/男性「もちろん俺らは抵抗するで？」.mp3",
+		"audioFile": "assets/audio/もちろん俺らは抵抗するで？.mp3",
 		"enabled": true
 	},
 	{
@@ -200,31 +200,31 @@
 	{
 		"id": "preset_34",
 		"text": "許せんなぁ...許せんなぁ...！ (1)",
-		"audioFile": "assets/audio/許せんなぁ...許せんなぁ...！ (1).mp3",
+		"audioFile": "assets/audio/許せんなぁ...許せんなぁ...！.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_35",
 		"text": "命がけで",
-		"audioFile": "assets/audio/野々村.mp3",
+		"audioFile": "assets/audio/命がけでー.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_36",
 		"text": "ここ",
-		"audioFile": "assets/audio/野獣「こ↑こ↓」.mp3",
+		"audioFile": "assets/audio/こ↑こ↓.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_37",
 		"text": "ま、多少はね？",
-		"audioFile": "assets/audio/野獣「ま、多少はね？」.mp3",
+		"audioFile": "assets/audio/ま、多少はね？.mp3",
 		"enabled": true
 	},
 	{
 		"id": "preset_38",
 		"text": "やりますねえ",
-		"audioFile": "assets/audio/野獣「やりますねえ」 (1).mp3",
+		"audioFile": "assets/audio/やりますねぇ.mp3",
 		"enabled": true
 	},
 	{
@@ -236,7 +236,13 @@
 	{
 		"id": "preset_40",
 		"text": "震えてねむれや",
-		"audioFile": "assets/audio/震えてねむれや.mp3",
+		"audioFile": "assets/audio/震えて眠れや.mp3",
+		"enabled": true
+	},
+	{
+		"id": "preset_41",
+		"text": "城之内死す",
+		"audioFile": "assets/audio/城之内死す.mp3",
 		"enabled": true
 	}
 ]
