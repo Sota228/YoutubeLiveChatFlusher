@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<meta charset="UTF-8">
 <meta name=viewport content="width=device-width, initial-scale=1">
 <title>YouTube LiveChat Flusher: Options</title>
 <link rel=stylesheet href=options.css>
@@ -233,6 +234,40 @@
 						<th>Position</th>
 						<td>
 							<select name="score_position">
+								<option value="top-right">Top Right (右上)</option>
+								<option value="center">Center (画面の中央)</option>
+								<option value="top-left">Top Left (左上)</option>
+							</select>
+						</td>
+					</tr>
+				</table>
+			</dd>
+			<dt>Timer Display (時間制限)</dt>
+			<dd>
+				<table>
+					<tr>
+						<th>Time Limit (時間制限)</th>
+						<td>
+							<label>
+								<input type="radio" name="timer_enabled" value="0">
+								<span>OFF</span>
+							</label>
+							<label>
+								<input type="radio" name="timer_enabled" value="1">
+								<span>ON</span>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th>Duration (制限時間)</th>
+						<td>
+							<input type="number" name="timer_duration" min="1" max="3600" value="60" style="width: 80px;"> 秒
+						</td>
+					</tr>
+					<tr>
+						<th>Position (表示位置)</th>
+						<td>
+							<select name="timer_position">
 								<option value="top-right">Top Right (右上)</option>
 								<option value="center">Center (画面の中央)</option>
 								<option value="top-left">Top Left (左上)</option>

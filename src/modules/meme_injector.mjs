@@ -109,6 +109,10 @@ export class MemeInjector {
 		/** @type {["dense", "random"]} */
 		const modeOptions = ['dense', 'random'];
 		layoutChatItem(el, this.#layoutCache, modeOptions[s.others.density]);
+
+		if (this.#layer.controller && typeof this.#layer.controller.spawnedMemeCount === 'number') {
+			this.#layer.controller.spawnedMemeCount++;
+		}
 	}
 
 	/**

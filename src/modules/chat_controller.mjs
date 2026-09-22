@@ -71,6 +71,18 @@ export class LiveChatController {
 	memeInjector = null;
 	/** @type {number} */
 	score = 0;
+	/** @type {number} */
+	remainingTime = 60;
+	/** @type {number} */
+	timerIntervalId = 0;
+	/** @type {number} */
+	spawnedMemeCount = 0;
+	/** @type {number} */
+	clickedMemeCount = 0;
+	/** @type {boolean} */
+	isTimeUp = false;
+	/** @type {?HTMLAudioElement} */
+	resultAudio = null;
 
 	/**
 	 * @param {HTMLElement} player YouTube player element
@@ -100,6 +112,7 @@ export class LiveChatController {
 			}
 		}, { passive: false });
 		root.addEventListener('click', e => {
+			if (this.isTimeUp) return;
 			const origin = /** @type {?HTMLElement} */ (e.target);
 			// Check if the click is on a meme comment or its child
 			const memeEl = /** @type {?HTMLElement} */ (origin?.closest?.('.meme') || (origin?.parentElement?.closest?.('.meme')));
@@ -109,6 +122,7 @@ export class LiveChatController {
 				memeEl.style.color = memeEl.dataset.color || '#ff6ec7';
 				if (!memeEl.dataset.scored) {
 					memeEl.dataset.scored = 'true';
+					this.clickedMemeCount++;
 					this.addScore(100);
 				}
 				this.#showMemePopup(memeEl);
@@ -124,7 +138,7 @@ export class LiveChatController {
 		root.addEventListener('animationend', e => {
 			const elem = /** @type {HTMLElement} */ (e.target);
 			// Skip persistent overlay elements; only recycle finished flush-scroll chat messages.
-			if (elem.id === 'yt-lcf-score' || elem.id === 'yt-lcf-meme-popup') return;
+			if (elem.id.startsWith('yt-lcf-')) return;
 			if (elem.parentNode === root) {
 				this.layoutCache.delete(elem.id);
 				elem.remove();
@@ -143,6 +157,9 @@ export class LiveChatController {
 			if (area === 'local') {
 				s.load().then(() => {
 					this.updateScoreDisplay();
+					if (changes.timer_enabled || changes.timer_duration) {
+						this.startTimer();
+					}
 				});
 				if ('memes' in changes) refreshEnabledMemesCache();
 			}
@@ -191,6 +208,9 @@ export class LiveChatController {
 		this.score = typeof storageData.meme_score === 'number' ? storageData.meme_score : 0;
 		this.updateScoreDisplay();
 
+		// Start countdown timer if enabled
+		this.startTimer();
+
 		// Initialize and start meme injector
 		this.memeInjector = new MemeInjector(this.layer, this.layoutCache);
 		this.memeInjector.start();
@@ -225,6 +245,155 @@ export class LiveChatController {
 			this.#activeMemeAudio = MemeInjector.playAudio(memeEl, videoElement);
 		} catch (err) {
 			logger.error('Failed to play meme audio.\nCaused by:', err);
+		}
+	}
+
+	/**
+	 * Starts or restarts countdown timer.
+	 */
+	startTimer() {
+		this.stopTimer();
+		const enabled = s.others.timer_enabled ?? 0;
+		if (!enabled) {
+			this.updateTimerDisplay();
+			return;
+		}
+
+		this.remainingTime = s.others.timer_duration ?? 60;
+		this.updateTimerDisplay();
+
+		this.timerIntervalId = setInterval(() => {
+			if (this.remainingTime > 0) {
+				this.remainingTime--;
+				this.updateTimerDisplay();
+			} else {
+				this.stopTimer();
+				this.updateTimerDisplay();
+				this.onTimeUp();
+			}
+		}, 1000);
+	}
+
+	/**
+	 * Handles time up event: stops memes and shows dark overlay result modal.
+	 */
+	onTimeUp() {
+		if (this.isTimeUp) return;
+		this.isTimeUp = true;
+		if (this.memeInjector) {
+			this.memeInjector.stop();
+		}
+		this.layer.showResultModal(
+			{
+				score: this.score,
+				spawned: this.spawnedMemeCount,
+				clicked: this.clickedMemeCount,
+			},
+			() => this.restartGame(),
+			() => this.returnToTitle()
+		);
+
+		const resultAudioFiles = ['ソ連.mp3', '本当によく頑張ったな？（唸り声.mp3'];
+		const randomFile = resultAudioFiles[Math.floor(Math.random() * resultAudioFiles.length)];
+		const audioUrl = browser.runtime.getURL(`assets/audio/result/${randomFile}`);
+		this.resultAudio = new Audio(audioUrl);
+		this.resultAudio.volume = 1.0;
+		this.resultAudio.play().catch(err => console.warn('Failed to play result audio:', err));
+	}
+
+	/**
+	 * Stops audio, hides result modal, and opens title screen (home.html).
+	 */
+	returnToTitle() {
+		if (this.resultAudio) {
+			this.resultAudio.pause();
+			this.resultAudio.currentTime = 0;
+			this.resultAudio = null;
+		}
+		this.layer.hideResultModal();
+		window.open(browser.runtime.getURL('home.html'), '_blank');
+	}
+
+	/**
+	 * Restarts the game: resets timer, score, meme counts, and resumes injection.
+	 */
+	async restartGame() {
+		if (this.resultAudio) {
+			this.resultAudio.pause();
+			this.resultAudio.currentTime = 0;
+			this.resultAudio = null;
+		}
+
+		this.isTimeUp = false;
+		this.spawnedMemeCount = 0;
+		this.clickedMemeCount = 0;
+		this.score = 0;
+		await browser.storage.local.set({ meme_score: 0 });
+
+		this.layer.hideResultModal();
+		this.layer.clear();
+
+		this.updateScoreDisplay();
+		this.startTimer();
+
+		if (this.memeInjector) {
+			this.memeInjector.start();
+		}
+	}
+
+	/**
+	 * Stops countdown timer interval.
+	 */
+	stopTimer() {
+		if (this.timerIntervalId) {
+			clearInterval(this.timerIntervalId);
+			this.timerIntervalId = 0;
+		}
+	}
+
+	/**
+	 * Updates timer display element position and formatted countdown time.
+	 */
+	updateTimerDisplay() {
+		if (!this.layer) return;
+		if (!this.layer.timerElement) {
+			this.layer.timerElement = document.createElement('div');
+			this.layer.timerElement.id = 'yt-lcf-timer';
+		}
+		const el = this.layer.timerElement;
+		if (!this.layer.root.contains(el)) {
+			this.layer.root.append(el);
+		}
+
+		const enabled = s.others.timer_enabled ?? 0;
+		const pos = s.others.timer_position || 'top-right';
+		const scorePos = s.others.score_position || 'top-right';
+		const scoreEnabled = s.others.score_enabled ?? 1;
+
+		if (!enabled) {
+			el.hidden = true;
+			return;
+		}
+		el.hidden = false;
+
+		const isSamePos = scoreEnabled && (pos === scorePos);
+		el.className = `${pos}${isSamePos ? ' offset' : ''}`;
+
+		const mins = Math.floor(this.remainingTime / 60);
+		const secs = this.remainingTime % 60;
+		const formattedMins = String(mins).padStart(2, '0');
+		const formattedSecs = String(secs).padStart(2, '0');
+
+		if (this.remainingTime <= 10 && this.remainingTime > 0) {
+			el.classList.add('warning');
+		} else {
+			el.classList.remove('warning');
+		}
+
+		if (this.remainingTime <= 0) {
+			el.textContent = 'TIME: 00:00 (TIME UP!)';
+		} else {
+			el.textContent = `TIME: ${formattedMins}:${formattedSecs}`;
 		}
 	}
 

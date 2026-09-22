@@ -97,6 +97,7 @@ const {
 	autostart,
 	message_pause,
 	score_enabled,
+	timer_enabled,
 	person_detector_device,
 	translation_method,
 	translation_bodyType,
@@ -109,6 +110,7 @@ const {
 	hotkey_layer_key, hotkey_layer_alt,
 	hotkey_panel_key, hotkey_panel_alt,
 	hotkey_pip_key, hotkey_pip_alt,
+	timer_duration,
 	translation_blacklist_regexp,
 	translation_url, translation_apiKey, translation_modelName,
 } = form.elements;
@@ -117,6 +119,7 @@ const {
 // @ts-expect-error
 const {
 	score_position,
+	timer_position,
 	person_detector_backend,
 	translation_translator
 } = form.elements;
@@ -159,6 +162,11 @@ s.load().then(() => {
 	// score display
 	score_enabled.value = (s.others.score_enabled ?? 1).toString();
 	score_position.value = s.others.score_position ?? 'top-right';
+
+	// timer display
+	timer_enabled.value = (s.others.timer_enabled ?? 0).toString();
+	timer_duration.value = (s.others.timer_duration ?? 60).toString();
+	timer_position.value = s.others.timer_position ?? 'top-right';
 
 	// person detection
 	person_detector_device.value = s.personDetection.device;
@@ -325,6 +333,9 @@ form.addEventListener('submit', async e => {
 			message_pause: Number.parseInt(message_pause.value, 10),
 			score_enabled: Number.parseInt(score_enabled.value, 10),
 			score_position: score_position.value,
+			timer_enabled: Number.parseInt(timer_enabled.value, 10),
+			timer_duration: Math.max(1, Number.parseInt(timer_duration.value, 10) || 60),
+			timer_position: timer_position.value,
 		},
 		/** @type {Partial<typeof s.data.hotkeys>} */
 		hotkeys: {
